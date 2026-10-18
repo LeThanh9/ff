@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0B14"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Top Header Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:text="FREE FIRE MASTER"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textColor="#00FFCC"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"/>
+
+                <TextView
+                    android:text="In-Game Floating Mod Menu &amp; ESP Engine"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#7A7A9E"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnDumper"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="OFFSET DUMPER"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#7C4DFF"
+                android:paddingHorizontal="14dp"/>
+        </LinearLayout>
+
+        <!-- System & Permission Info Badges -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dp">
+
+            <TextView
+                android:id="@+id/tvRootStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ROOT: CHECKING..."
+                android:textSize="11sp"
+                android:textColor="#FFCC00"
+                android:fontFamily="monospace"
+                android:background="#15172C"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginEnd="6dp"/>
+
+            <TextView
+                android:id="@+id/tvOverlayStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="OVERLAY: CHECKING..."
+                android:textSize="11sp"
+                android:textColor="#FFCC00"
+                android:fontFamily="monospace"
+                android:background="#15172C"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginStart="6dp"/>
+        </LinearLayout>
+
+        <!-- In-game Floating Menu Hint Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#141933"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:text="⚡"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp"
+                android:layout_marginEnd="10dp"/>
+
+            <TextView
+                android:text="HỖ TRỢ CẢ ROOT &amp; NO-ROOT: Menu Nổi và Proxy Fake Lag (127.0.0.1:8888) hoạt động trực tiếp 100% không cần Root. Nếu muốn đọc RAM ESP/Aimbot trên máy No-Root, hãy chạy app qua Không Gian Ảo (VMOS, F1VM, DualSpace)."
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#C5D0F0"
+                android:textSize="12sp"
+                android:lineSpacingExtra="3dp"/>
+        </LinearLayout>
+
+        <!-- Card Features Configuration -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#111322"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:text="CẤU HÌNH BAN ĐẦU"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#00FFCC"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp"/>
+
+            <Switch
+                android:id="@+id/switchESP"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ESP Overlay (Box, HP, Snapline, Khoảng cách)"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:checked="true"
+                android:paddingVertical="8dp"/>
+
+            <Switch
+                android:id="@+id/switchAimbot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aimbot FOV Target Lock (Khóa đầu trong vòng FOV)"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:checked="false"
+                android:paddingVertical="8dp"/>
+
+            <!-- Proxy & Fake Lag Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#15172C"
+                android:padding="14dp"
+                android:layout_marginTop="10dp">
+
+                <TextView
+                    android:text="NETWORK PROXY &amp; FAKE LAG"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#00FFCC"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="6dp"/>
+
+                <TextView
+                    android:id="@+id/tvProxyInfo"
+                    android:text="SOCKS5/TCP Proxy: 127.0.0.1:8888 [ĐÃ TẮT]"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#8888AA"
+                    android:textSize="11sp"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="8dp"/>
+
+                <Switch
+                    android:id="@+id/switchFakeLag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Bật FakeLag Proxy (Mô phỏng trễ 127.0.0.1:8888)"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:checked="false"
+                    android:paddingVertical="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvLagValue"
+                    android:text="Độ trễ Fake Lag: 150 ms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#00FFCC"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:layout_marginTop="8dp"/>
+
+                <SeekBar
+                    android:id="@+id/sbFakeLag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="950"
+                    android:progress="100"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Switch
+                    android:id="@+id/switchRootNetem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Kernel Netem (Chỉ áp dụng nếu máy có Root)"
+                    android:textColor="#FFCC00"
+                    android:textSize="12sp"
+                    android:checked="false"
+                    android:paddingVertical="4dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Status Box -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:text="Status: IDLE (Sẵn sàng inject)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#AAAAAA"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:padding="10dp"
+            android:background="#0E101D"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Action Buttons Row 1: INJECT & SHOW MENU -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
+            <Button
+                android:id="@+id/btnInject"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="START INJECT"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#00CC66"
+                android:layout_marginEnd="6dp"/>
+
+            <Button
+                android:id="@+id/btnShowMenu"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="HIỂN THỊ MENU NỔI"
+                android:textStyle="bold"
+                android:textColor="#0A0B14"
+                android:backgroundTint="#00FFCC"
+                android:layout_marginStart="6dp"/>
+
+        </LinearLayout>
+
+        <!-- Action Buttons Row 2: STOP -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnStop"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="STOP TẤT CẢ (ENGINE + MENU + PROXY)"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#D50000"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
