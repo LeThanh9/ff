@@ -51,14 +51,20 @@ public class MainActivity extends Activity {
         updateProxyInfo();
 
         // Lắng nghe sự kiện trạng thái từ FakeLagProxy
-        FakeLagProxy.getInstance().setListener((running, port, delay) -> {
-            runOnUiThread(() -> {
-                currentLagMs = delay;
-                if (switchFakeLag != null && switchFakeLag.isChecked() != running) {
-                    switchFakeLag.setChecked(running);
-                }
-                updateProxyInfo();
-            });
+        FakeLagProxy.getInstance().setListener(new FakeLagProxy.ProxyListener() {
+            @Override
+            public void onStatusChanged(boolean running, int port, int delay) {
+                runOnUiThread(() -> {
+                    currentLagMs = delay;
+                    if (switchFakeLag != null && switchFakeLag.isChecked() != running) {
+                        switchFakeLag.setChecked(running);
+                    }
+                    updateProxyInfo();
+                });
+            }
+
+            @Override
+            public void onStatsUpdated(long bytes, long packets) {}
         });
 
         // Tự động load file offsets.json nếu đã từng dump thành công

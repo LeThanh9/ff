@@ -39,9 +39,10 @@ public class FakeLagProxy {
 
     private ProxyListener listener;
 
+    @FunctionalInterface
     public interface ProxyListener {
         void onStatusChanged(boolean running, int port, int delayMs);
-        void onStatsUpdated(long bytes, long packets);
+        default void onStatsUpdated(long bytes, long packets) {}
     }
 
     private FakeLagProxy() {}
