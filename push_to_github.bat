@@ -1,5 +1,7 @@
 @echo off
 chcp 65001 >nul
+cd /d "%~dp0"
+
 echo ========================================================
 echo   HƯỚNG DẪN ĐẨY DỰ ÁN LÊN GITHUB ĐỂ TỰ ĐỘNG BUILD APK
 echo ========================================================
@@ -18,15 +20,16 @@ if "%REPO_URL%"=="" (
 )
 
 echo.
-echo [1/4] Khởi tạo Git...
-git init
-echo [2/4] Chuẩn bị đóng gói các file...
+echo [1/3] Đang cập nhật thay đổi mới nhất vào Git...
 git add .
-git commit -m "Auto build Android APK with GitHub Actions"
+git commit -m "Update project files" 2>nul
 git branch -M main
+
+echo [2/3] Đang liên kết với kho lưu trữ GitHub của bạn...
 git remote remove origin 2>nul
 git remote add origin %REPO_URL%
-echo [3/4] Đang đẩy code lên GitHub...
+
+echo [3/3] Đang đẩy toàn bộ code lên GitHub...
 git push -u origin main
 
 if %ERRORLEVEL% EQU 0 (
