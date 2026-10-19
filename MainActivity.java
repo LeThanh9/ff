@@ -107,6 +107,10 @@ public class MainActivity extends Activity {
             boolean rootOk = RootUtils.isRootAvailable();
             if (rootOk) {
                 RootUtils.prepareEnvironment();
+                int ffPid = RootUtils.findFreeFirePid();
+                if (ffPid > 0) {
+                    CheatBridge.setTargetPid(ffPid);
+                }
             } else {
                 Toast.makeText(this, "Chạy chế độ No-Root: Dùng Không Gian Ảo cho ESP hoặc Wi-Fi Proxy cho Fake Lag!", Toast.LENGTH_SHORT).show();
             }
@@ -126,6 +130,9 @@ public class MainActivity extends Activity {
 
             if (fakeLag) {
                 CheatBridge.applyFakeLag(true, currentLagMs, switchRootNetem.isChecked());
+                if (switchRootNetem.isChecked() || RootUtils.isRootAvailable()) {
+                    RootUtils.setUdpDesyncLag(true, currentLagMs);
+                }
             }
 
             int result = nativeInject(esp, aimbot, fakeLag);
@@ -144,6 +151,7 @@ public class MainActivity extends Activity {
         btnStop.setOnClickListener(v -> {
             nativeStop();
             CheatBridge.applyFakeLag(false, 0, false);
+            RootUtils.setUdpDesyncLag(false, 0);
             stopService(new Intent(this, OverlayService.class));
             tvStatus.setText("Status: STOPPED (Đã tắt tất cả)");
             tvStatus.setTextColor(0xFFAAAAAA);
@@ -166,6 +174,10 @@ public class MainActivity extends Activity {
                     }
                     if (switchFakeLag.isChecked()) {
                         CheatBridge.setFakeLagDelay(currentLagMs);
+                        if (RootUtils.isUdpDesyncActive()) {
+                            RootUtils.setUdpDesyncLag(false, 0);
+                            RootUtils.setUdpDesyncLag(true, currentLagMs);
+                        }
                         updateProxyInfo();
                     }
                 }
@@ -176,12 +188,22 @@ public class MainActivity extends Activity {
 
         switchFakeLag.setOnCheckedChangeListener((btn, isChecked) -> {
             CheatBridge.applyFakeLag(isChecked, currentLagMs, switchRootNetem.isChecked());
+            if (isChecked && (switchRootNetem.isChecked() || RootUtils.isRootAvailable())) {
+                RootUtils.setUdpDesyncLag(true, currentLagMs);
+            } else {
+                RootUtils.setUdpDesyncLag(false, 0);
+            }
             updateProxyInfo();
         });
 
         switchRootNetem.setOnCheckedChangeListener((btn, isChecked) -> {
             if (switchFakeLag.isChecked()) {
                 CheatBridge.applyFakeLag(true, currentLagMs, isChecked);
+                if (isChecked) {
+                    RootUtils.setUdpDesyncLag(true, currentLagMs);
+                } else {
+                    RootUtils.setUdpDesyncLag(false, 0);
+                }
                 updateProxyInfo();
             }
         });
@@ -192,11 +214,14 @@ public class MainActivity extends Activity {
 
     private void updateProxyInfo() {
         if (tvProxyInfo != null) {
-            if (FakeLagProxy.getInstance().isRunning()) {
+            if (RootUtils.isUdpDesyncActive()) {
+                tvProxyInfo.setText("● UDP Ghost Desync [ĐANG CHẠY | " + currentLagMs + "ms]");
+                tvProxyInfo.setTextColor(0xFF00FF66);
+            } else if (FakeLagProxy.getInstance().isRunning()) {
                 tvProxyInfo.setText("● SOCKS5/TCP Proxy: 127.0.0.1:8888 [ĐANG CHẠY | " + currentLagMs + "ms]");
                 tvProxyInfo.setTextColor(0xFF00FFCC);
             } else {
-                tvProxyInfo.setText("○ SOCKS5/TCP Proxy: 127.0.0.1:8888 [ĐÃ TẮT]");
+                tvProxyInfo.setText("○ Fake Lag Proxy: [ĐÃ TẮT]");
                 tvProxyInfo.setTextColor(0xFF8888AA);
             }
         }

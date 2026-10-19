@@ -38,6 +38,7 @@ static const char* const FF_PACKAGES[] = {
 
 // ─── Globals & Atomic State ──────────────────────────────────────────────────
 static pid_t                g_ffPid       = 0;
+static std::atomic<pid_t>   g_manualPid{0};
 static uintptr_t            g_il2cppBase  = 0;
 static std::atomic<bool>    g_espOn{true};
 static std::atomic<bool>    g_aimbotOn{false};
@@ -45,6 +46,7 @@ static std::atomic<bool>    g_fakeLagOn{false};
 static std::atomic<int>     g_fakeLagMs{100};
 static std::atomic<bool>    g_running{false};
 static pthread_t            g_thread;
+
 
 static std::atomic<float>   g_aimbotFov{180.f};
 
@@ -156,6 +158,16 @@ static inline bool memRead(pid_t pid, uintptr_t addr, T& out) {
 
 // ─── Multi-Package PID Finder (Hỗ trợ cả Root lẫn No-Root Virtual Space) ─────────
 static pid_t findFFPid() {
+    // 0. Nếu Java đã tìm thấy PID và thiết lập qua JNI
+    pid_t man = g_manualPid.load();
+    if (man > 0) {
+        if (kill(man, 0) == 0) {
+            return man;
+        } else {
+            g_manualPid.store(0);
+        }
+    }
+
     // 1. Kiểm tra nếu đang chạy chung tiến trình trong Không Gian Ảo No-Root (Virtual Container)
     char selfCmd[256];
     int selfFd = open("/proc/self/cmdline", O_RDONLY);
@@ -164,6 +176,10 @@ static pid_t findFFPid() {
         close(selfFd);
         if (sn > 0) {
             selfCmd[sn] = '\0';
+            if (strstr(selfCmd, "freefire") != nullptr) {
+                LOGI("Found Free Fire in current container: %s (PID: %d)", selfCmd, getpid());
+                return getpid();
+            }
             for (int i = 0; FF_PACKAGES[i] != nullptr; ++i) {
                 if (strstr(selfCmd, FF_PACKAGES[i]) != nullptr) {
                     LOGI("Found Free Fire in current container (No-Root Virtual Space): %s (PID: %d)", selfCmd, getpid());
@@ -187,21 +203,42 @@ static pid_t findFFPid() {
 
         snprintf(buf, sizeof(buf), "/proc/%d/cmdline", pid);
         int fd = open(buf, O_RDONLY);
-        if (fd < 0) continue;
-
-        ssize_t n = read(fd, buf, sizeof(buf) - 1);
-        close(fd);
-        if (n <= 0) continue;
-        buf[n] = '\0';
-
-        for (int i = 0; FF_PACKAGES[i] != nullptr; ++i) {
-            if (strstr(buf, FF_PACKAGES[i]) != nullptr) {
-                found = pid;
-                LOGI("Discovered FF process: %s (PID: %d)", FF_PACKAGES[i], pid);
-                break;
+        if (fd >= 0) {
+            ssize_t n = read(fd, buf, sizeof(buf) - 1);
+            close(fd);
+            if (n > 0) {
+                buf[n] = '\0';
+                if (strstr(buf, "freefire") != nullptr || strstr(buf, "dts.freefire") != nullptr || strstr(buf, "vng.freefire") != nullptr) {
+                    found = pid;
+                    LOGI("Discovered FF process via cmdline: %s (PID: %d)", buf, pid);
+                    break;
+                }
+                for (int i = 0; FF_PACKAGES[i] != nullptr; ++i) {
+                    if (strstr(buf, FF_PACKAGES[i]) != nullptr) {
+                        found = pid;
+                        LOGI("Discovered FF process: %s (PID: %d)", FF_PACKAGES[i], pid);
+                        break;
+                    }
+                }
+                if (found) break;
             }
         }
-        if (found) break;
+
+        // Fallback đọc /proc/%d/comm
+        snprintf(buf, sizeof(buf), "/proc/%d/comm", pid);
+        int cfd = open(buf, O_RDONLY);
+        if (cfd >= 0) {
+            ssize_t cn = read(cfd, buf, sizeof(buf) - 1);
+            close(cfd);
+            if (cn > 0) {
+                buf[cn] = '\0';
+                if (strstr(buf, "freefire") != nullptr) {
+                    found = pid;
+                    LOGI("Discovered FF process via comm: %s (PID: %d)", buf, pid);
+                    break;
+                }
+            }
+        }
     }
     closedir(dp);
     return found;
@@ -278,10 +315,12 @@ static void* cheatLoop(void*) {
         Matrix4x4 vp = {};
         uintptr_t vpAddr = g_il2cppBase + g_offsets.worldToScreen;
         if (!memRead(g_ffPid, vpAddr, vp)) {
-            // Có thể game vừa khởi động lại hoặc crash
-            g_ffPid = 0;
-            g_il2cppBase = 0;
-            usleep(250000);
+            // Không tự hủy PID nếu game vẫn đang chạy (chỉ reset nếu game thực sự đã thoát)
+            if (kill(g_ffPid, 0) != 0) {
+                g_ffPid = 0;
+                g_il2cppBase = 0;
+            }
+            usleep(200000);
             continue;
         }
 
@@ -551,4 +590,26 @@ Java_com_ff_cheat_CheatBridge_loadOffsets(JNIEnv* env, jclass, jstring jpath) {
     return ok ? JNI_TRUE : JNI_FALSE;
 }
 
+JNIEXPORT void JNICALL
+Java_com_ff_cheat_CheatBridge_setTargetPid(JNIEnv*, jclass, jint pid) {
+    if (pid > 0) {
+        g_manualPid.store(static_cast<pid_t>(pid));
+        g_ffPid = static_cast<pid_t>(pid);
+        g_il2cppBase = getModuleBase(g_ffPid, "libil2cpp.so");
+        g_offsets.il2cppBase = g_il2cppBase;
+        LOGI("Manual target Free Fire PID set via JNI: %d (il2cppBase: 0x%lx)", pid, (unsigned long)g_il2cppBase);
+    }
+}
+
+JNIEXPORT jint JNICALL
+Java_com_ff_cheat_CheatBridge_getGamePid(JNIEnv*, jclass) {
+    return static_cast<jint>(g_ffPid);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_ff_cheat_CheatBridge_isGameConnected(JNIEnv*, jclass) {
+    return (g_ffPid > 0 && g_il2cppBase > 0) ? JNI_TRUE : JNI_FALSE;
+}
+
 } // extern "C"
+

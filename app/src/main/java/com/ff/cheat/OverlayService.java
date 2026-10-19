@@ -93,15 +93,48 @@ public class OverlayService extends Service {
             floatingMenu = new FloatingMenu(this, wm, espView);
         }
 
-        // Vòng lặp lấy tọa độ người chơi từ Native Engine (~60 FPS)
+        // Vòng lặp lấy tọa độ người chơi & Aimbot từ Native Engine (~60 FPS)
         isRunning = true;
         renderThread = new Thread(() -> {
+            int loopCounter = 0;
             while (isRunning && !Thread.currentThread().isInterrupted()) {
                 try {
+                    // Cứ mỗi 60 chu kỳ (~1 giây), tự động tìm PID Free Fire qua Root nếu chưa kết nối
+                    loopCounter++;
+                    if (loopCounter % 60 == 0) {
+                        if (!CheatBridge.isGameConnected() && RootUtils.isRootAvailable()) {
+                            int ffPid = RootUtils.findFreeFirePid();
+                            if (ffPid > 0) {
+                                CheatBridge.setTargetPid(ffPid);
+                            }
+                        }
+                    }
+
+                    // 1. Lấy dữ liệu ESP Player Positions
                     float[] playerData = CheatBridge.getPlayerPositions();
                     if (espView != null) {
                         espView.updatePlayers(playerData);
                     }
+
+                    // 2. Lấy dữ liệu Aimbot Head Lock Target
+                    float[] aimTarget = CheatBridge.getAimbotTarget();
+                    if (aimTarget != null && aimTarget.length >= 2) {
+                        float targetX = aimTarget[0];
+                        float targetY = aimTarget[1];
+                        if (espView != null) {
+                            espView.setAimbotTarget(targetX, targetY);
+                        }
+                        if (RootUtils.isAutoAimDragEnabled()) {
+                            int scrW = espView != null ? espView.getWidth() : 1920;
+                            int scrH = espView != null ? espView.getHeight() : 1080;
+                            RootUtils.triggerAimDrag(scrW * 0.5f, scrH * 0.5f, targetX, targetY);
+                        }
+                    } else {
+                        if (espView != null) {
+                            espView.setAimbotTarget(-1.0f, -1.0f);
+                        }
+                    }
+
                     Thread.sleep(16);
                 } catch (InterruptedException e) {
                     break;
@@ -178,6 +211,7 @@ public class OverlayService extends Service {
 
         // Dừng FakeLag Proxy nếu đang chạy
         FakeLagProxy.getInstance().stopProxy();
+        RootUtils.setUdpDesyncLag(false, 0);
 
         if (renderThread != null) {
             renderThread.interrupt();

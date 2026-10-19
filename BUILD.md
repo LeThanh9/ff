@@ -79,16 +79,21 @@ ff/
 3. **Hỗ trợ đa phiên bản Free Fire**:
    - Tự nhận diện cả Free Fire Quốc tế (`com.dts.freefireth`), Free Fire MAX (`com.dts.freefiremax`) và Free Fire VNG (`com.vng.freefireth`).
 
-### D. Hệ Thống Fake Lag Proxy & Điều Khiển Menu Nổi (Mới)
-1. **Local SOCKS5 / TCP Proxy Server (`FakeLagProxy.java`)**:
-   - Chạy local proxy server tại `127.0.0.1:8888` hỗ trợ SOCKS5 (RFC 1928) & HTTP CONNECT.
-   - Chèn độ trễ nhân tạo (Artificial Delay / Desync) tùy biến từ 50ms đến 2000ms.
-   - Thao tác thay đổi độ trễ tức thì qua SeekBar hoặc các nút preset (100ms, 250ms, 500ms, 800ms).
-2. **Tích hợp Kernel Traffic Control (tc netem & iptables)**:
-   - Với quyền Root, tự động điều khiển kernel Linux qua `tc qdisc netem delay` trên các giao diện mạng (`wlan0`, `rmnet_data0`), làm trễ trực tiếp các gói tin gameplay UDP/TCP của game.
-3. **Nút "HIỂN THỊ MENU NỔI" Độc Lập**:
-   - Cho phép mở Floating Menu ngay từ MainActivity mà không cần phải vào game trước để test vị trí, cấu hình ESP, Aimbot và Proxy.
-   - Engine tự động chạy watcher background thread để tự kết nối ngay khi game Free Fire khởi động.
+### D. Hệ Thống Fake Lag & UDP Desync (Đã Khắc Phục Triệt Để)
+1. **UDP Ghost Desync Lag (Thật 100% cho Free Fire)**:
+   - Free Fire giao tiếp gameplay hoàn toàn qua gói tin **UDP**, không dùng HTTP/TCP.
+   - Phiên bản mới tích hợp cơ chế ngắt nhả UDP thông minh qua `iptables` cấp Root / Máy ảo (VMOS, VPhoneGaga, F1VM), tạo độ trễ nhân tạo làm đối thủ thấy bạn đứng yên (desync/bất tử khi chạy) và dịch chuyển tức thời khi nhả gói tin!
+2. **Local SOCKS5 / TCP Proxy Server (`FakeLagProxy.java`)**:
+   - Chạy local proxy server tại `127.0.0.1:8888` hỗ trợ SOCKS5 & HTTP CONNECT cho máy No-Root.
+
+### E. Chế Độ Thử Nghiệm ESP & Aimbot (Test Preview Mode)
+1. **Khắc phục lỗi "Cài APK vào không thấy gì"**:
+   - Khi chưa vào trận hoặc chưa tìm thấy game, Overlay tự động hiển thị **Chế độ Mô phỏng (Simulation Preview)** với 2 nhân vật Bot 3D mẫu (Corner Box, Snapline, HP bar động, khoảng cách, nhãn địch).
+   - Tích hợp tia ngắm đỏ Aimbot Lock Ray và biểu tượng `🎯 HEAD LOCK` nhắm thẳng vào đầu mục tiêu.
+2. **Nút "QUÉT PID FREE FIRE (ROOT / MÁY ẢO)"**:
+   - Nút quét trực tiếp trên Floating Menu và MainActivity: Dùng lệnh `pidof` / `pgrep` cấp Root truyền PID chính xác xuống Native C++ qua JNI, tránh bị SELinux chặn khi quét `/proc`.
+3. **Khắc phục lỗi Native tự hủy PID**:
+   - C++ không còn tự xóa PID về 0 khi đọc offset chưa trùng khớp; giữ nguyên tiến trình đã kết nối.
 
 ---
 

@@ -67,4 +67,20 @@ public class CheatBridge {
      * Nạp file offsets JSON vào bộ nhớ
      */
     public static native boolean loadOffsets(String jsonPath);
+
+    /**
+     * Thiết lập PID mục tiêu Free Fire từ Java (ví dụ tìm bằng Root su pidof/pgrep)
+     */
+    public static native void setTargetPid(int pid);
+
+    /**
+     * Lấy PID hiện tại của Free Fire đang được native hook
+     */
+    public static native int getGamePid();
+
+    /**
+     * Kiểm tra Native Engine đã gắn thành công vào Free Fire hay chưa
+     */
+    public static native boolean isGameConnected();
 }
+

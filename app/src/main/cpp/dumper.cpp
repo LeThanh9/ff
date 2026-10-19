@@ -83,10 +83,26 @@ static pid_t findFF() {
         buf[n] = '\0';
 
         for (int i = 0; FF_PACKAGES[i]; ++i) {
-            if (strstr(buf, FF_PACKAGES[i]) != nullptr) {
+            if (strstr(buf, FF_PACKAGES[i]) != nullptr || strstr(buf, "freefire") != nullptr) {
                 closedir(dp);
-                LOGI("Found Free Fire process: %s (PID: %d)", FF_PACKAGES[i], pid);
+                LOGI("Found Free Fire process: %s (PID: %d)", buf, pid);
                 return pid;
+            }
+        }
+
+        // Fallback /proc/%d/comm
+        snprintf(path, sizeof(path), "/proc/%d/comm", pid);
+        int cfd = open(path, O_RDONLY);
+        if (cfd >= 0) {
+            int cn = read(cfd, buf, sizeof(buf) - 1);
+            close(cfd);
+            if (cn > 0) {
+                buf[cn] = '\0';
+                if (strstr(buf, "freefire") != nullptr) {
+                    closedir(dp);
+                    LOGI("Found Free Fire process via comm: %s (PID: %d)", buf, pid);
+                    return pid;
+                }
             }
         }
     }

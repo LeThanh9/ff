@@ -18,10 +18,11 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * FloatingMenu — In-Game Floating Mod Menu cho Free Fire
- * Cho phép bật/tắt ESP, Aimbot, chỉnh FOV và mở Dumper ngay trong trận đấu
+ * Hỗ trợ ESP Visuals, Aimbot Head Lock, UDP Desync Fake Lag, và Chế độ Thử nghiệm Test Preview
  */
 public class FloatingMenu {
 
@@ -50,6 +51,7 @@ public class FloatingMenu {
     private boolean isProxyLagActive = false;
     private boolean isRootNetemActive = false;
     private TextView tvProxyStatus;
+    private TextView tvGameStatus;
 
     public FloatingMenu(Context context, WindowManager wm, ESPView espView) {
         this.context = context;
@@ -121,7 +123,6 @@ public class FloatingMenu {
                         float diffX = Math.abs(event.getRawX() - initialTouchX);
                         float diffY = Math.abs(event.getRawY() - initialTouchY);
                         if (diffX < 10 && diffY < 10) {
-                            // Chạm nhẹ -> Mở Menu Panel
                             openMenu();
                         }
                         return true;
@@ -149,7 +150,7 @@ public class FloatingMenu {
         LinearLayout header = new LinearLayout(context);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(0, 0, 0, dp(8));
+        header.setPadding(0, 0, 0, dp(6));
 
         TextView tvTitle = new TextView(context);
         tvTitle.setText("⚡ FF MOD MENU v2.0");
@@ -197,6 +198,39 @@ public class FloatingMenu {
             }
         });
 
+        // ── Trạng thái kết nối Free Fire ──
+        tvGameStatus = new TextView(context);
+        tvGameStatus.setTextSize(11);
+        tvGameStatus.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        tvGameStatus.setPadding(dp(2), 0, dp(2), dp(4));
+        panel.addView(tvGameStatus);
+        updateGameStatusBanner();
+
+        // Nút Quét PID Free Fire
+        Button btnScanPid = new Button(context);
+        btnScanPid.setText("🔍 QUÉT PID FREE FIRE (ROOT / MÁY ẢO)");
+        btnScanPid.setTextSize(11);
+        btnScanPid.setTextColor(Color.WHITE);
+        btnScanPid.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        GradientDrawable scanBg = new GradientDrawable();
+        scanBg.setColor(0xFF1B2038);
+        scanBg.setCornerRadius(dp(6));
+        scanBg.setStroke(dp(1), COLOR_BORDER);
+        btnScanPid.setBackground(scanBg);
+        LinearLayout.LayoutParams scanLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(32));
+        scanLp.setMargins(dp(2), 0, dp(2), dp(6));
+        btnScanPid.setOnClickListener(v -> {
+            int pid = RootUtils.findFreeFirePid();
+            if (pid > 0) {
+                CheatBridge.setTargetPid(pid);
+                Toast.makeText(context, "Đã tìm thấy Free Fire PID: " + pid, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Chưa tìm thấy PID. Hãy mở game trước!", Toast.LENGTH_SHORT).show();
+            }
+            updateGameStatusBanner();
+        });
+        panel.addView(btnScanPid, scanLp);
+
         // ── Danh sách tính năng (ScrollView) ──
         ScrollView scroll = new ScrollView(context);
         LinearLayout content = new LinearLayout(context);
@@ -209,6 +243,9 @@ public class FloatingMenu {
             if (espView != null) {
                 espView.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             }
+        });
+        addSwitch(content, "🧪 Chế độ Mô phỏng (Test Preview)", espView != null && espView.isSimulationMode(), isChecked -> {
+            if (espView != null) espView.setSimulationMode(isChecked);
         });
         addSwitch(content, "ESP Box", true, isChecked -> {
             if (espView != null) espView.setDrawBox(isChecked);
@@ -228,11 +265,20 @@ public class FloatingMenu {
         addSwitch(content, "Aimbot FOV Circle", true, isChecked -> {
             if (espView != null) espView.setDrawFovCircle(isChecked);
         });
+        addSwitch(content, "Aimbot Lock Ray (Tia ngắm đỏ)", true, isChecked -> {
+            if (espView != null) espView.setDrawAimbotRay(isChecked);
+        });
 
         // Section: AIMBOT ENGINE
         addSectionHeader(content, "AIMBOT ENGINE");
-        addSwitch(content, "Aimbot Lock (Auto Head)", false, isChecked -> {
+        addSwitch(content, "Aimbot Lock (Auto Head)", true, isChecked -> {
             CheatBridge.setAimbot(isChecked);
+        });
+        addSwitch(content, "Auto Drag Aim (Kéo tâm khi có Root)", RootUtils.isAutoAimDragEnabled(), isChecked -> {
+            RootUtils.setAutoAimDrag(isChecked);
+            if (isChecked && !RootUtils.isRootAvailable()) {
+                Toast.makeText(context, "Cần cấp quyền Root để kích hoạt vuốt cảm ứng!", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // SeekBar chỉnh FOV Radius
@@ -264,14 +310,22 @@ public class FloatingMenu {
         addSectionHeader(content, "NETWORK PROXY & FAKE LAG");
 
         tvProxyStatus = new TextView(context);
-        tvProxyStatus.setText("○ PROXY 127.0.0.1:8888 [ĐÃ TẮT]");
+        tvProxyStatus.setText("○ FAKE LAG: ĐÃ TẮT");
         tvProxyStatus.setTextColor(COLOR_TEXT_MUTED);
         tvProxyStatus.setTextSize(12);
         tvProxyStatus.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
         tvProxyStatus.setPadding(dp(4), dp(4), dp(4), dp(4));
         content.addView(tvProxyStatus);
 
-        addSwitch(content, "Bật FakeLag Proxy (SOCKS5/TCP)", CheatBridge.isFakeLagRunning(), isChecked -> {
+        addSwitch(content, "⚡ UDP Desync Ghost Lag (Thật 100%)", RootUtils.isUdpDesyncActive(), isChecked -> {
+            RootUtils.setUdpDesyncLag(isChecked, currentLagMs);
+            if (isChecked && !RootUtils.isRootAvailable()) {
+                Toast.makeText(context, "UDP Desync cần Root hoặc Máy ảo (VMOS / VPhoneGaga)!", Toast.LENGTH_LONG).show();
+            }
+            updateProxyStatusText();
+        });
+
+        addSwitch(content, "SOCKS5 Proxy (127.0.0.1:8888)", CheatBridge.isFakeLagRunning(), isChecked -> {
             isProxyLagActive = isChecked;
             CheatBridge.applyFakeLag(isChecked, currentLagMs, isRootNetemActive);
             updateProxyStatusText();
@@ -295,8 +349,12 @@ public class FloatingMenu {
                 tvLagVal.setText("Độ trễ Fake Lag: " + currentLagMs + " ms");
                 if (isProxyLagActive) {
                     CheatBridge.setFakeLagDelay(currentLagMs);
-                    updateProxyStatusText();
                 }
+                if (RootUtils.isUdpDesyncActive()) {
+                    RootUtils.setUdpDesyncLag(false, 0);
+                    RootUtils.setUdpDesyncLag(true, currentLagMs);
+                }
+                updateProxyStatusText();
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -308,7 +366,7 @@ public class FloatingMenu {
         presetRow.setOrientation(LinearLayout.HORIZONTAL);
         presetRow.setPadding(dp(4), dp(2), dp(4), dp(6));
 
-        int[] presets = {100, 250, 500, 800};
+        int[] presets = {150, 300, 600, 900};
         for (int p : presets) {
             Button btnP = new Button(context);
             btnP.setText(p + "ms");
@@ -331,14 +389,18 @@ public class FloatingMenu {
                 tvLagVal.setText("Độ trễ Fake Lag: " + currentLagMs + " ms");
                 if (isProxyLagActive) {
                     CheatBridge.setFakeLagDelay(currentLagMs);
-                    updateProxyStatusText();
                 }
+                if (RootUtils.isUdpDesyncActive()) {
+                    RootUtils.setUdpDesyncLag(false, 0);
+                    RootUtils.setUdpDesyncLag(true, currentLagMs);
+                }
+                updateProxyStatusText();
             });
             presetRow.addView(btnP, pLp);
         }
         content.addView(presetRow);
 
-        addSwitch(content, "Kernel Netem (Chỉ cần nếu có Root)", isRootNetemActive, isChecked -> {
+        addSwitch(content, "Kernel Netem (Linux tc)", isRootNetemActive, isChecked -> {
             isRootNetemActive = isChecked;
             if (isProxyLagActive) {
                 CheatBridge.applyFakeLag(true, currentLagMs, isRootNetemActive);
@@ -358,8 +420,8 @@ public class FloatingMenu {
         btnBg.setColor(COLOR_ACCENT);
         btnBg.setCornerRadius(dp(8));
         btnOpenDumper.setBackground(btnBg);
-        LinearLayout.LayoutParams btnDumpLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42));
-        btnDumpLp.setMargins(dp(4), dp(8), dp(4), dp(4));
+        LinearLayout.LayoutParams btnDumpLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40));
+        btnDumpLp.setMargins(dp(4), dp(6), dp(4), dp(4));
         btnOpenDumper.setOnClickListener(v -> {
             Intent intent = new Intent(context, DumperActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -368,7 +430,7 @@ public class FloatingMenu {
         content.addView(btnOpenDumper, btnDumpLp);
 
         scroll.addView(content);
-        panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(320)));
+        panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(300)));
 
         menuParams = new WindowManager.LayoutParams(
                 dp(280), ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -417,7 +479,7 @@ public class FloatingMenu {
 
     public void openMenu() {
         if (menuView != null) {
-            // Đặt vị trí menu gần vị trí bubble
+            updateGameStatusBanner();
             menuParams.x = Math.max(dp(10), bubbleParams.x);
             menuParams.y = Math.max(dp(20), bubbleParams.y);
 
@@ -436,7 +498,6 @@ public class FloatingMenu {
             wm.removeView(menuView);
         }
         if (bubbleView != null && bubbleView.getWindowToken() == null) {
-            // Đặt lại bubble tại vị trí menu vừa đóng
             bubbleParams.x = menuParams.x;
             bubbleParams.y = menuParams.y;
             wm.addView(bubbleView, bubbleParams);
@@ -456,13 +517,32 @@ public class FloatingMenu {
         }
     }
 
+    private void updateGameStatusBanner() {
+        if (tvGameStatus == null) return;
+        boolean connected = CheatBridge.isGameConnected();
+        int pid = CheatBridge.getGamePid();
+        if (connected && pid > 0) {
+            tvGameStatus.setText("● FREE FIRE: ĐÃ HOOK GAME (PID: " + pid + ")");
+            tvGameStatus.setTextColor(COLOR_GREEN);
+        } else if (pid > 0) {
+            tvGameStatus.setText("○ FREE FIRE: ĐÃ TÌM PID " + pid + " (Chờ Offsets...)");
+            tvGameStatus.setTextColor(0xFFFFD600);
+        } else {
+            tvGameStatus.setText("○ FREE FIRE: ĐANG MÔ PHỎNG (Chưa vào trận)");
+            tvGameStatus.setTextColor(COLOR_TEXT_MUTED);
+        }
+    }
+
     private void updateProxyStatusText() {
         if (tvProxyStatus != null) {
-            if (isProxyLagActive) {
-                tvProxyStatus.setText("● PROXY 127.0.0.1:8888 [ĐANG CHẠY | " + currentLagMs + "ms]");
+            if (RootUtils.isUdpDesyncActive()) {
+                tvProxyStatus.setText("● UDP GHOST DESYNC: BẬT [" + currentLagMs + "ms]");
+                tvProxyStatus.setTextColor(COLOR_GREEN);
+            } else if (isProxyLagActive) {
+                tvProxyStatus.setText("● SOCKS5 PROXY: 127.0.0.1:8888 [" + currentLagMs + "ms]");
                 tvProxyStatus.setTextColor(COLOR_GREEN);
             } else {
-                tvProxyStatus.setText("○ PROXY 127.0.0.1:8888 [ĐÃ TẮT]");
+                tvProxyStatus.setText("○ FAKE LAG: ĐÃ TẮT");
                 tvProxyStatus.setTextColor(COLOR_TEXT_MUTED);
             }
         }

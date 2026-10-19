@@ -10,35 +10,50 @@ import android.view.View;
 /**
  * ESPView — High-Performance Overlay Canvas Renderer
  * Thiết kế Zero-Allocation trong onDraw để đạt mượt mà 60–120 FPS
+ * Tích hợp Chế độ Mô phỏng ESP (Simulation Preview) và Aimbot Lock Visual
  */
 public class ESPView extends View {
 
     private volatile float[] players = new float[0];
 
     // Paints
-    private final Paint boxPaint     = new Paint();
-    private final Paint hpPaint      = new Paint();
-    private final Paint hpBg         = new Paint();
-    private final Paint textPaint    = new Paint();
-    private final Paint snapPaint    = new Paint();
-    private final Paint fovPaint     = new Paint();
+    private final Paint boxPaint        = new Paint();
+    private final Paint hpPaint         = new Paint();
+    private final Paint hpBg            = new Paint();
+    private final Paint textPaint       = new Paint();
+    private final Paint snapPaint       = new Paint();
+    private final Paint fovPaint        = new Paint();
+    private final Paint aimRayPaint     = new Paint();
+    private final Paint aimLockPaint    = new Paint();
+    private final Paint hudBgPaint      = new Paint();
+    private final Paint hudTextPaint    = new Paint();
 
     // Cấu hình hiển thị
-    private boolean drawBox       = true;
-    private boolean drawSnapline  = true;
-    private boolean drawHealth    = true;
-    private boolean drawDistance  = true;
-    private boolean drawFovCircle = true;
-    private boolean cornerBoxMode = true;
-    private float   fovRadius     = 180.0f;
+    private boolean drawBox          = true;
+    private boolean drawSnapline     = true;
+    private boolean drawHealth       = true;
+    private boolean drawDistance     = true;
+    private boolean drawFovCircle    = true;
+    private boolean cornerBoxMode    = true;
+    private boolean drawAimbotRay    = true;
+    private boolean simulationMode   = true; // Mặc định hiển thị mô phỏng nếu game chưa load
+    private boolean isGameConnected  = false;
+    private float   fovRadius        = 180.0f;
+
+    // Aimbot target coordinates
+    private float aimbotTargetX = -1.0f;
+    private float aimbotTargetY = -1.0f;
 
     // Màu sắc cố định (tránh parseColor trong loop)
-    private static final int COLOR_RED        = 0xFFFF3344;
+    private static final int COLOR_RED        = 0xFFFF2244;
+    private static final int COLOR_CYAN       = 0xFF00FFCC;
     private static final int COLOR_ORANGE     = 0xFFFF9900;
     private static final int COLOR_HP_GREEN   = 0xFF00E676;
     private static final int COLOR_HP_YELLOW  = 0xFFFFD600;
     private static final int COLOR_HP_RED     = 0xFFFF1744;
     private static final int COLOR_HP_BG      = 0xCC1A1A1A;
+    private static final int COLOR_AIM_RAY    = 0xCCFF1744;
+    private static final int COLOR_LOCK_RING  = 0xFFFF0055;
 
     private static final int STRIDE = 7;
 
@@ -57,7 +72,7 @@ public class ESPView extends View {
         hpBg.setColor(COLOR_HP_BG);
 
         textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(26.0f);
+        textPaint.setTextSize(24.0f);
         textPaint.setTypeface(Typeface.MONOSPACE);
         textPaint.setFakeBoldText(true);
         textPaint.setShadowLayer(3.0f, 1.0f, 1.0f, Color.BLACK);
@@ -70,26 +85,46 @@ public class ESPView extends View {
         fovPaint.setColor(0x4400E5FF);
         fovPaint.setStrokeWidth(2.0f);
         fovPaint.setAntiAlias(true);
+
+        aimRayPaint.setStyle(Paint.Style.STROKE);
+        aimRayPaint.setColor(COLOR_AIM_RAY);
+        aimRayPaint.setStrokeWidth(2.5f);
+        aimRayPaint.setAntiAlias(true);
+
+        aimLockPaint.setStyle(Paint.Style.STROKE);
+        aimLockPaint.setColor(COLOR_LOCK_RING);
+        aimLockPaint.setStrokeWidth(3.0f);
+        aimLockPaint.setAntiAlias(true);
+
+        hudBgPaint.setColor(0xBB0A0E1A);
+        hudBgPaint.setStyle(Paint.Style.FILL);
+
+        hudTextPaint.setColor(COLOR_CYAN);
+        hudTextPaint.setTextSize(20.0f);
+        hudTextPaint.setTypeface(Typeface.MONOSPACE);
+        hudTextPaint.setFakeBoldText(true);
+        hudTextPaint.setAntiAlias(true);
     }
 
     public void updatePlayers(float[] data) {
         if (data == null || data.length == 0) {
             this.players = new float[0];
+            this.isGameConnected = false;
         } else {
             this.players = data;
+            this.isGameConnected = true;
         }
         postInvalidate();
     }
 
-    public void setOptions(boolean box, boolean snapline, boolean hp, boolean dist, boolean fov, boolean corner) {
-        this.drawBox = box;
-        this.drawSnapline = snapline;
-        this.drawHealth = hp;
-        this.drawDistance = dist;
-        this.drawFovCircle = fov;
-        this.cornerBoxMode = corner;
+    public void setAimbotTarget(float x, float y) {
+        this.aimbotTargetX = x;
+        this.aimbotTargetY = y;
         postInvalidate();
     }
+
+    public void setSimulationMode(boolean on)  { this.simulationMode = on; postInvalidate(); }
+    public boolean isSimulationMode()         { return simulationMode; }
 
     public void setDrawBox(boolean on)        { this.drawBox = on; postInvalidate(); }
     public void setDrawSnapline(boolean on)   { this.drawSnapline = on; postInvalidate(); }
@@ -97,6 +132,7 @@ public class ESPView extends View {
     public void setDrawDistance(boolean on)   { this.drawDistance = on; postInvalidate(); }
     public void setDrawFovCircle(boolean on)  { this.drawFovCircle = on; postInvalidate(); }
     public void setCornerBoxMode(boolean on)  { this.cornerBoxMode = on; postInvalidate(); }
+    public void setDrawAimbotRay(boolean on)  { this.drawAimbotRay = on; postInvalidate(); }
     public void setFovRadius(float radius)    { this.fovRadius = radius; postInvalidate(); }
 
     public boolean isDrawBox()       { return drawBox; }
@@ -113,81 +149,134 @@ public class ESPView extends View {
 
         final float screenW = getWidth();
         final float screenH = getHeight();
+        if (screenW <= 0 || screenH <= 0) return;
+
         final float screenCX = screenW * 0.5f;
         final float screenCY = screenH * 0.5f;
 
-        // Vẽ vòng tròn FOV Aimbot ở tâm màn hình theo bán kính động
+        // ── 1. HUD TOP STATUS BADGE ──
+        canvas.drawRect(20.0f, 15.0f, 440.0f, 55.0f, hudBgPaint);
+        String statusText = isGameConnected
+                ? "⚡ FF MASTER | LIVE HOOKED | 60 FPS"
+                : "⚡ FF MASTER | PREVIEW DEMO | 60 FPS";
+        hudTextPaint.setColor(isGameConnected ? COLOR_HP_GREEN : COLOR_CYAN);
+        canvas.drawText(statusText, 30.0f, 42.0f, hudTextPaint);
+
+        // ── 2. VẼ VÒNG TRÒN FOV AIMBOT Ở TÂM MÀN HÌNH ──
         if (drawFovCircle) {
             canvas.drawCircle(screenCX, screenCY, fovRadius, fovPaint);
         }
 
         final float[] currentPlayers = this.players;
-        if (currentPlayers == null || currentPlayers.length < STRIDE) return;
+        final boolean hasLivePlayers = (currentPlayers != null && currentPlayers.length >= STRIDE);
 
-        final int count = currentPlayers.length / STRIDE;
+        // ── 3. VẼ PLAYERS (LIVE HOẶC MÔ PHỎNG TEST PREVIEW) ──
+        if (hasLivePlayers) {
+            renderPlayerList(canvas, currentPlayers, screenCX, screenH);
+        } else if (simulationMode) {
+            renderSimulatedTargets(canvas, screenCX, screenCY, screenH);
+        }
 
+        // ── 4. VẼ TIA KHÓA AIMBOT NẾU CÓ TARGET ──
+        if (drawAimbotRay && aimbotTargetX > 0 && aimbotTargetY > 0) {
+            canvas.drawLine(screenCX, screenCY, aimbotTargetX, aimbotTargetY, aimRayPaint);
+            canvas.drawCircle(aimbotTargetX, aimbotTargetY, 14.0f, aimLockPaint);
+            canvas.drawText("🎯 LOCKED", aimbotTargetX - 45.0f, aimbotTargetY - 20.0f, textPaint);
+        }
+    }
+
+    private void renderPlayerList(Canvas canvas, float[] pData, float screenCX, float screenH) {
+        final int count = pData.length / STRIDE;
         for (int i = 0; i < count; ++i) {
             final int off = i * STRIDE;
+            final float x    = pData[off];
+            final float y    = pData[off + 1];
+            final float w    = pData[off + 2];
+            final float h    = pData[off + 3];
+            final float hp   = pData[off + 4];
+            final float dist = pData[off + 5];
+            final boolean vis = pData[off + 6] > 0.5f;
 
-            final float x    = currentPlayers[off];
-            final float y    = currentPlayers[off + 1];
-            final float w    = currentPlayers[off + 2];
-            final float h    = currentPlayers[off + 3];
-            final float hp   = currentPlayers[off + 4];
-            final float dist = currentPlayers[off + 5];
-            final boolean vis = currentPlayers[off + 6] > 0.5f;
+            drawSingleEnemy(canvas, x, y, w, h, hp, dist, vis, screenCX, screenH, "Enemy");
+        }
+    }
 
-            final int teamColor = vis ? COLOR_RED : COLOR_ORANGE;
-            boxPaint.setColor(teamColor);
-            snapPaint.setColor(teamColor);
+    private void renderSimulatedTargets(Canvas canvas, float screenCX, float screenCY, float screenH) {
+        // Hoạt ảnh nổi bồng bềnh nhẹ để chứng minh canvas đang render 60 FPS live
+        float animOffset = (float) Math.sin(System.currentTimeMillis() * 0.003) * 10.0f;
 
-            final float left   = x - (w * 0.5f);
-            final float top    = y - h;
-            final float right  = x + (w * 0.5f);
-            final float bottom = y;
+        // Bot 1: Bên trái tâm màn hình, khoảng cách 38m
+        float b1X = screenCX - 240.0f;
+        float b1Y = screenCY + 110.0f + animOffset;
+        drawSingleEnemy(canvas, b1X, b1Y, 80.0f, 175.0f, 100.0f, 38.0f, true, screenCX, screenH, "Bot 1 [Demo]");
 
-            // 1. ESP Box (Corner Box hoặc Full Box)
-            if (drawBox) {
-                if (cornerBoxMode) {
-                    drawCornerBox(canvas, left, top, right, bottom, w, h);
-                } else {
-                    canvas.drawRect(left, top, right, bottom, boxPaint);
-                }
+        // Khóa Aimbot vào đầu Bot 1 nếu đang bật Aimbot
+        if (drawAimbotRay && (aimbotTargetX < 0 || aimbotTargetY < 0)) {
+            float headY = b1Y - 175.0f;
+            canvas.drawLine(screenCX, screenCY, b1X, headY, aimRayPaint);
+            canvas.drawCircle(b1X, headY, 12.0f, aimLockPaint);
+            canvas.drawText("🎯 HEAD LOCK", b1X - 55.0f, headY - 16.0f, textPaint);
+        }
+
+        // Bot 2: Bên phải xa hơn, khoảng cách 72m
+        float b2X = screenCX + 280.0f;
+        float b2Y = screenCY + 50.0f - animOffset;
+        drawSingleEnemy(canvas, b2X, b2Y, 62.0f, 135.0f, 48.0f, 72.0f, false, screenCX, screenH, "Bot 2 [Demo]");
+    }
+
+    private void drawSingleEnemy(Canvas canvas, float x, float y, float w, float h,
+                                 float hp, float dist, boolean vis,
+                                 float screenCX, float screenH, String label) {
+        final int teamColor = vis ? COLOR_RED : COLOR_ORANGE;
+        boxPaint.setColor(teamColor);
+        snapPaint.setColor(teamColor);
+
+        final float left   = x - (w * 0.5f);
+        final float top    = y - h;
+        final float right  = x + (w * 0.5f);
+        final float bottom = y;
+
+        // 1. ESP Box
+        if (drawBox) {
+            if (cornerBoxMode) {
+                drawCornerBox(canvas, left, top, right, bottom, w, h);
+            } else {
+                canvas.drawRect(left, top, right, bottom, boxPaint);
+            }
+        }
+
+        // 2. Snapline từ đáy màn hình tới chân
+        if (drawSnapline) {
+            canvas.drawLine(screenCX, screenH, x, bottom, snapPaint);
+        }
+
+        // 3. Thanh Máu (HP Bar)
+        if (drawHealth) {
+            final float barW = 6.0f;
+            final float barSpacing = 4.0f;
+            final float barLeft = left - barW - barSpacing;
+            final float barRight = left - barSpacing;
+
+            final float clampedHp = Math.max(0.0f, Math.min(100.0f, hp));
+            final float currentBarH = h * (clampedHp / 100.0f);
+
+            canvas.drawRect(barLeft, top, barRight, bottom, hpBg);
+
+            if (clampedHp > 60.0f) {
+                hpPaint.setColor(COLOR_HP_GREEN);
+            } else if (clampedHp > 30.0f) {
+                hpPaint.setColor(COLOR_HP_YELLOW);
+            } else {
+                hpPaint.setColor(COLOR_HP_RED);
             }
 
-            // 2. Snapline: Kéo từ đáy màn hình tới chân kẻ địch (không che tâm ngắm)
-            if (drawSnapline) {
-                canvas.drawLine(screenCX, screenH, x, bottom, snapPaint);
-            }
+            canvas.drawRect(barLeft, bottom - currentBarH, barRight, bottom, hpPaint);
+        }
 
-            // 3. Thanh Máu (Health bar bên trái khung)
-            if (drawHealth) {
-                final float barW = 6.0f;
-                final float barSpacing = 4.0f;
-                final float barLeft = left - barW - barSpacing;
-                final float barRight = left - barSpacing;
-
-                final float clampedHp = Math.max(0.0f, Math.min(100.0f, hp));
-                final float currentBarH = h * (clampedHp / 100.0f);
-
-                canvas.drawRect(barLeft, top, barRight, bottom, hpBg);
-
-                if (clampedHp > 60.0f) {
-                    hpPaint.setColor(COLOR_HP_GREEN);
-                } else if (clampedHp > 30.0f) {
-                    hpPaint.setColor(COLOR_HP_YELLOW);
-                } else {
-                    hpPaint.setColor(COLOR_HP_RED);
-                }
-
-                canvas.drawRect(barLeft, bottom - currentBarH, barRight, bottom, hpPaint);
-            }
-
-            // 4. Khoảng cách & HP hiển thị
-            if (drawDistance) {
-                int distInt = (int) dist;
-                canvas.drawText(distInt + "m", left, top - 10.0f, textPaint);
-            }
+        // 4. Khoảng cách & Tên
+        if (drawDistance) {
+            int distInt = (int) dist;
+            canvas.drawText(label + " " + distInt + "m", left, top - 10.0f, textPaint);
         }
     }
 
