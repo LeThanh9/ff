@@ -95,8 +95,8 @@ public class PatchInstaller {
                                 + "cp -f \"" + tempConfig.getAbsolutePath() + "\" \"" + targetDir.getAbsolutePath() + "/" + FILE_CONFIG + "\" && "
                                 + "chmod 666 \"" + targetDir.getAbsolutePath() + "/" + FILE_PATCH + "\" && "
                                 + "chmod 666 \"" + targetDir.getAbsolutePath() + "/" + FILE_CONFIG + "\"";
-                        int exitCode = RootUtils.executeCommand(cmd);
-                        if (exitCode == 0) {
+                        boolean ok = RootUtils.executeCommand(cmd);
+                        if (ok) {
                             copiedToGame = true;
                             sbSuccess.append("Đã cài vào: ").append(targetDir.getParentFile().getName()).append("\n");
                         }
