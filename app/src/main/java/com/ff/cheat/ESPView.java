@@ -39,6 +39,7 @@ public class ESPView extends View {
     private boolean drawFovCircle    = true;
     private boolean cornerBoxMode    = true;
     private boolean drawAimbotRay    = true;
+    private boolean aimAtNeck        = true; // Tâm ngay cổ để hỗ trợ kéo tâm (Drag Headshot)
     private boolean simulationMode   = true; // Mặc định hiển thị mô phỏng nếu game chưa load
     private boolean isGameConnected  = false;
     private float   fovRadius        = 180.0f;
@@ -143,6 +144,7 @@ public class ESPView extends View {
     public void setDrawFovCircle(boolean on)  { this.drawFovCircle = on; postInvalidate(); }
     public void setCornerBoxMode(boolean on)  { this.cornerBoxMode = on; postInvalidate(); }
     public void setDrawAimbotRay(boolean on)  { this.drawAimbotRay = on; postInvalidate(); }
+    public void setAimAtNeck(boolean on)      { this.aimAtNeck = on; postInvalidate(); }
     public void setFovRadius(float radius)    { this.fovRadius = radius; postInvalidate(); }
 
     public boolean isDrawBox()       { return drawBox; }
@@ -153,6 +155,8 @@ public class ESPView extends View {
     public boolean isDrawSkeleton()  { return drawSkeleton; }
     public boolean isDrawFovCircle() { return drawFovCircle; }
     public boolean isCornerBoxMode() { return cornerBoxMode; }
+    public boolean isDrawAimbotRay() { return drawAimbotRay; }
+    public boolean isAimAtNeck()     { return aimAtNeck; }
     public float   getFovRadius()    { return fovRadius; }
 
     @Override
@@ -193,7 +197,8 @@ public class ESPView extends View {
         if (drawAimbotRay && aimbotTargetX > 0 && aimbotTargetY > 0) {
             canvas.drawLine(screenCX, screenCY, aimbotTargetX, aimbotTargetY, aimRayPaint);
             canvas.drawCircle(aimbotTargetX, aimbotTargetY, 14.0f, aimLockPaint);
-            canvas.drawText("🎯 LOCKED", aimbotTargetX - 45.0f, aimbotTargetY - 20.0f, textPaint);
+            String lockTag = aimAtNeck ? "🎯 NECK (DRAG HEAD)" : "🎯 HEAD LOCKED";
+            canvas.drawText(lockTag, aimbotTargetX - 65.0f, aimbotTargetY - 20.0f, textPaint);
         }
     }
 
@@ -222,12 +227,15 @@ public class ESPView extends View {
         float b1Y = screenCY + 110.0f + animOffset;
         drawSingleEnemy(canvas, b1X, b1Y, 80.0f, 175.0f, 100.0f, 38.0f, true, screenCX, screenH, "Bot 1 [Demo]");
 
-        // Khóa Aimbot vào đầu Bot 1 nếu đang bật Aimbot
+        // Khóa Aimbot vào Bot 1 nếu đang bật tia ngắm
         if (drawAimbotRay && (aimbotTargetX < 0 || aimbotTargetY < 0)) {
-            float headY = b1Y - 175.0f;
-            canvas.drawLine(screenCX, screenCY, b1X, headY, aimRayPaint);
-            canvas.drawCircle(b1X, headY, 12.0f, aimLockPaint);
-            canvas.drawText("🎯 HEAD LOCK", b1X - 55.0f, headY - 16.0f, textPaint);
+            // aimAtNeck = true: Đặt tâm ở vị trí Cổ (18% từ đỉnh) để hỗ trợ vuốt tay kéo tâm lên đầu
+            float targetY = aimAtNeck ? (b1Y - 175.0f + 175.0f * 0.18f) : (b1Y - 175.0f + 175.0f * 0.08f);
+            String lockLabel = aimAtNeck ? "🎯 NECK (DRAG HEAD)" : "🎯 HEAD LOCK";
+
+            canvas.drawLine(screenCX, screenCY, b1X, targetY, aimRayPaint);
+            canvas.drawCircle(b1X, targetY, 12.0f, aimLockPaint);
+            canvas.drawText(lockLabel, b1X - 70.0f, targetY - 16.0f, textPaint);
         }
 
         // Bot 2: Bên phải xa hơn, khoảng cách 72m

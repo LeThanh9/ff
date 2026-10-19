@@ -277,8 +277,11 @@ public class FloatingMenu {
 
         // Section: AIMBOT ENGINE
         addSectionHeader(content, "AIMBOT ENGINE");
-        addSwitch(content, "Aimbot Lock (Auto Head)", true, isChecked -> {
+        addSwitch(content, "Aimbot Lock (Auto Aim)", true, isChecked -> {
             CheatBridge.setAimbot(isChecked);
+        });
+        addSwitch(content, "🎯 Tâm ở Cổ (Hỗ trợ Kéo Tâm lên Đầu)", espView != null && espView.isAimAtNeck(), isChecked -> {
+            if (espView != null) espView.setAimAtNeck(isChecked);
         });
         addSwitch(content, "Auto Drag Aim (Kéo tâm khi có Root)", RootUtils.isAutoAimDragEnabled(), isChecked -> {
             RootUtils.setAutoAimDrag(isChecked);
