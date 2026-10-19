@@ -16,7 +16,7 @@ import java.io.File;
 public class MainActivity extends Activity {
 
     private Switch switchESP, switchAimbot, switchFakeLag, switchRootNetem, switchAntiBanFirewall;
-    private Button btnInject, btnStop, btnDumper, btnShowMenu, btnInstallPatch, btnRemovePatch;
+    private Button btnInject, btnStop, btnDumper, btnShowMenu, btnRemovePatch;
     private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvProxyInfo, tvLagValue, tvPatchStatus;
     private android.widget.SeekBar sbFakeLag;
     private int currentLagMs = 150;
@@ -41,7 +41,6 @@ public class MainActivity extends Activity {
         btnShowMenu           = findViewById(R.id.btnShowMenu);
         btnStop               = findViewById(R.id.btnStop);
         btnDumper             = findViewById(R.id.btnDumper);
-        btnInstallPatch       = findViewById(R.id.btnInstallPatch);
         btnRemovePatch        = findViewById(R.id.btnRemovePatch);
         tvStatus              = findViewById(R.id.tvStatus);
         tvRootStatus          = findViewById(R.id.tvRootStatus);
@@ -215,38 +214,7 @@ public class MainActivity extends Activity {
         switchESP.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setESP(isChecked));
         switchAimbot.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setAimbot(isChecked));
 
-        // ── 5. QUẢN LÝ BẢN VÁ MENU ẨN OBB55 (HOTFIX IFIX) ──
-        if (btnInstallPatch != null) {
-            btnInstallPatch.setOnClickListener(v -> {
-                btnInstallPatch.setEnabled(false);
-                btnInstallPatch.setText("ĐANG CÀI ĐẶT...");
-                PatchInstaller.installPatch(this, new PatchInstaller.InstallCallback() {
-                    @Override
-                    public void onSuccess(String message) {
-                        runOnUiThread(() -> {
-                            btnInstallPatch.setEnabled(true);
-                            btnInstallPatch.setText("⚡ CÀI VÀO GAME (1-CLICK)");
-                            updatePatchStatusUI();
-                            new android.app.AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("Cài Đặt Bản Vá")
-                                    .setMessage(message)
-                                    .setPositiveButton("OK", null)
-                                    .show();
-                        });
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        runOnUiThread(() -> {
-                            btnInstallPatch.setEnabled(true);
-                            btnInstallPatch.setText("⚡ CÀI VÀO GAME (1-CLICK)");
-                            updatePatchStatusUI();
-                            Toast.makeText(MainActivity.this, error, Toast.LENGTH_LONG).show();
-                        });
-                    }
-                });
-            });
-        }
+        // ── 5. QUẢN LÝ DỌN DẸP / GỠ BỎ FILE VÁ (CHỐNG BAN NICK) ──
 
         if (btnRemovePatch != null) {
             btnRemovePatch.setOnClickListener(v -> {
