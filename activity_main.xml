@@ -226,6 +226,8 @@
 
             </LinearLayout>
 
+        </LinearLayout>
+
         <!-- Card: Bản Vá Menu Ẩn OBB55 (Hotfix IFix) -->
         <LinearLayout
             android:layout_width="match_parent"
