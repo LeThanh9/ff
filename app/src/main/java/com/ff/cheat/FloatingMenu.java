@@ -328,7 +328,7 @@ public class FloatingMenu {
     public void updateGameStatusBanner() {
         if (tvGameStatus == null) return;
         boolean connected = CheatBridge.isGameConnected();
-        int pid = CheatBridge.getTargetPid();
+        int pid = CheatBridge.getGamePid();
         if (connected && pid > 0) {
             tvGameStatus.setText("● BỘ NHỚ: ĐÃ KẾT NỐI (PID " + pid + ")");
             tvGameStatus.setTextColor(COLOR_GREEN);
