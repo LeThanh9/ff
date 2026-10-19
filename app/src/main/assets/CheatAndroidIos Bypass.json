@@ -1,0 +1,61 @@
+{
+    "sources": [
+        {
+            "label": "AdAway official hosts",
+            "url": "https:\/\/adaway.org\/hosts.txt",
+            "enabled": true,
+            "allow": false,
+            "redirect": false
+        },
+        {
+            "label": "AdAway official hosts",
+            "url": "https:\/\/raw.githubusercontent.com\/nguyenxuanlocuytin-pixelmond\/my-files\/refs\/heads\/main\/hosts_original.txt",
+            "enabled": true,
+            "allow": false,
+            "redirect": false
+        },
+        {
+            "label": "Pete Lowe blocklist hosts",
+            "url": "https:\/\/pgl.yoyo.org\/adservers\/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext",
+            "enabled": true,
+            "allow": false,
+            "redirect": false
+        }
+    ],
+    "blocked": [
+        {
+            "host": "gin.freefireind.in",
+            "enabled": true
+        },
+        {
+            "host": "gin.freefiremobile.com",
+            "enabled": true
+        },
+        {
+            "host": "com.multiaccounts.cloneapps",
+            "enabled": true
+        },
+        {
+            "host": "com.dts.freefiremax",
+            "enabled": true
+        },
+        {
+            "host": "garena.co.id",
+            "enabled": true
+        },
+        {
+            "host": "na.gin.freefiremobile.com",
+            "enabled": true
+        },
+        {
+            "host": "gamesecurity.us.freefiremobile.com",
+            "enabled": true
+        },
+        {
+            "host": "hotro.ff.garena.vn",
+            "enabled": true
+        }
+    ],
+    "allowed": [],
+    "redirected": []
+}

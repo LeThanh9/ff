@@ -15,9 +15,9 @@ import java.io.File;
 
 public class MainActivity extends Activity {
 
-    private Switch switchESP, switchAimbot, switchFakeLag, switchRootNetem;
-    private Button btnInject, btnStop, btnDumper, btnShowMenu;
-    private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvProxyInfo, tvLagValue;
+    private Switch switchESP, switchAimbot, switchFakeLag, switchRootNetem, switchAntiBanFirewall;
+    private Button btnInject, btnStop, btnDumper, btnShowMenu, btnInstallPatch, btnRemovePatch;
+    private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvProxyInfo, tvLagValue, tvPatchStatus;
     private android.widget.SeekBar sbFakeLag;
     private int currentLagMs = 150;
 
@@ -32,20 +32,24 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        switchESP       = findViewById(R.id.switchESP);
-        switchAimbot    = findViewById(R.id.switchAimbot);
-        switchFakeLag   = findViewById(R.id.switchFakeLag);
-        switchRootNetem = findViewById(R.id.switchRootNetem);
-        btnInject       = findViewById(R.id.btnInject);
-        btnShowMenu     = findViewById(R.id.btnShowMenu);
-        btnStop         = findViewById(R.id.btnStop);
-        btnDumper       = findViewById(R.id.btnDumper);
-        tvStatus        = findViewById(R.id.tvStatus);
-        tvRootStatus    = findViewById(R.id.tvRootStatus);
-        tvOverlayStatus = findViewById(R.id.tvOverlayStatus);
-        tvProxyInfo     = findViewById(R.id.tvProxyInfo);
-        tvLagValue      = findViewById(R.id.tvLagValue);
-        sbFakeLag       = findViewById(R.id.sbFakeLag);
+        switchESP             = findViewById(R.id.switchESP);
+        switchAimbot          = findViewById(R.id.switchAimbot);
+        switchFakeLag         = findViewById(R.id.switchFakeLag);
+        switchRootNetem       = findViewById(R.id.switchRootNetem);
+        switchAntiBanFirewall = findViewById(R.id.switchAntiBanFirewall);
+        btnInject             = findViewById(R.id.btnInject);
+        btnShowMenu           = findViewById(R.id.btnShowMenu);
+        btnStop               = findViewById(R.id.btnStop);
+        btnDumper             = findViewById(R.id.btnDumper);
+        btnInstallPatch       = findViewById(R.id.btnInstallPatch);
+        btnRemovePatch        = findViewById(R.id.btnRemovePatch);
+        tvStatus              = findViewById(R.id.tvStatus);
+        tvRootStatus          = findViewById(R.id.tvRootStatus);
+        tvOverlayStatus       = findViewById(R.id.tvOverlayStatus);
+        tvProxyInfo           = findViewById(R.id.tvProxyInfo);
+        tvLagValue            = findViewById(R.id.tvLagValue);
+        tvPatchStatus         = findViewById(R.id.tvPatchStatus);
+        sbFakeLag             = findViewById(R.id.sbFakeLag);
 
         refreshSystemStatus();
         updateProxyInfo();
@@ -210,6 +214,76 @@ public class MainActivity extends Activity {
 
         switchESP.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setESP(isChecked));
         switchAimbot.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setAimbot(isChecked));
+
+        // ── 5. QUẢN LÝ BẢN VÁ MENU ẨN OBB55 (HOTFIX IFIX) ──
+        if (btnInstallPatch != null) {
+            btnInstallPatch.setOnClickListener(v -> {
+                btnInstallPatch.setEnabled(false);
+                btnInstallPatch.setText("ĐANG CÀI ĐẶT...");
+                PatchInstaller.installPatch(this, new PatchInstaller.InstallCallback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        runOnUiThread(() -> {
+                            btnInstallPatch.setEnabled(true);
+                            btnInstallPatch.setText("⚡ CÀI VÀO GAME (1-CLICK)");
+                            updatePatchStatusUI();
+                            new android.app.AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("Cài Đặt Bản Vá")
+                                    .setMessage(message)
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            btnInstallPatch.setEnabled(true);
+                            btnInstallPatch.setText("⚡ CÀI VÀO GAME (1-CLICK)");
+                            updatePatchStatusUI();
+                            Toast.makeText(MainActivity.this, error, Toast.LENGTH_LONG).show();
+                        });
+                    }
+                });
+            });
+        }
+
+        if (btnRemovePatch != null) {
+            btnRemovePatch.setOnClickListener(v -> {
+                btnRemovePatch.setEnabled(false);
+                PatchInstaller.removePatch(this, new PatchInstaller.InstallCallback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        runOnUiThread(() -> {
+                            btnRemovePatch.setEnabled(true);
+                            updatePatchStatusUI();
+                            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            btnRemovePatch.setEnabled(true);
+                            updatePatchStatusUI();
+                            Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            });
+        }
+
+        if (switchAntiBanFirewall != null) {
+            switchAntiBanFirewall.setOnCheckedChangeListener((btn, isChecked) -> {
+                boolean ok = PatchInstaller.applyAntiBanFirewall(isChecked);
+                if (!ok && isChecked) {
+                    switchAntiBanFirewall.setChecked(false);
+                    Toast.makeText(this, "Yêu cầu quyền Root để tự động kích hoạt Tường lửa! Với máy No-Root, vui lòng sử dụng app AdAway VPN.", Toast.LENGTH_LONG).show();
+                } else if (ok) {
+                    Toast.makeText(this, isChecked ? "Đã kích hoạt Tường lửa Anti-Ban (Chặn máy chủ Garena)!" : "Đã tắt Tường lửa", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void updateProxyInfo() {
@@ -246,6 +320,9 @@ public class MainActivity extends Activity {
             }
         }
 
+        // Cập nhật trạng thái bản vá
+        updatePatchStatusUI();
+
         // Kiểm tra Overlay
         boolean overlayOk = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -258,6 +335,21 @@ public class MainActivity extends Activity {
             } else {
                 tvOverlayStatus.setText("OVERLAY: CHƯA CẤP ✗");
                 tvOverlayStatus.setTextColor(0xFFFFCC00);
+            }
+        }
+    }
+
+    private void updatePatchStatusUI() {
+        if (tvPatchStatus != null) {
+            boolean installed = PatchInstaller.isPatchInstalled();
+            if (installed) {
+                tvPatchStatus.setText("ĐÃ CÀI ĐẶT ✓");
+                tvPatchStatus.setTextColor(0xFF00FF66);
+                tvPatchStatus.setBackgroundColor(0x2000FF66);
+            } else {
+                tvPatchStatus.setText("CHƯA CÀI ✗");
+                tvPatchStatus.setTextColor(0xFFFF5555);
+                tvPatchStatus.setBackgroundColor(0x20FF5555);
             }
         }
     }

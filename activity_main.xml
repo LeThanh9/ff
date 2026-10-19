@@ -226,6 +226,95 @@
 
             </LinearLayout>
 
+        <!-- Card: Bản Vá Menu Ẩn OBB55 (Hotfix IFix) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#141933"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:text="BẢN VÁ MENU ẨN OBB55 (HOTFIX IFIX)"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#00FFCC"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"/>
+
+                <TextView
+                    android:id="@+id/tvPatchStatus"
+                    android:text="CHƯA CÀI ✗"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FF5555"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:background="#20FF5555"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:text="Bản vá chạy trực tiếp bên trong Unity engine của Free Fire (No-Root 100%). Tự vẽ menu IMGUI trong trận đấu khi chạm 2 ngón tay lên màn hình."
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#A0B0D0"
+                android:textSize="11sp"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnInstallPatch"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:text="⚡ CÀI VÀO GAME (1-CLICK)"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#7C4DFF"
+                    android:layout_marginEnd="5dp"/>
+
+                <Button
+                    android:id="@+id/btnRemovePatch"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:text="GỠ BẢN VÁ"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#FF4444"
+                    android:layout_marginStart="5dp"/>
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/switchAntiBanFirewall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tường lửa Anti-Ban (Chặn máy chủ quét Garena)"
+                android:textColor="#FFCC00"
+                android:textSize="12sp"
+                android:checked="false"
+                android:paddingVertical="4dp"/>
         </LinearLayout>
 
         <!-- Status Box -->
