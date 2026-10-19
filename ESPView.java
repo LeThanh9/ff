@@ -25,6 +25,7 @@ public class ESPView extends View {
     private final Paint fovPaint        = new Paint();
     private final Paint aimRayPaint     = new Paint();
     private final Paint aimLockPaint    = new Paint();
+    private final Paint skeletonPaint   = new Paint();
     private final Paint hudBgPaint      = new Paint();
     private final Paint hudTextPaint    = new Paint();
 
@@ -33,6 +34,8 @@ public class ESPView extends View {
     private boolean drawSnapline     = true;
     private boolean drawHealth       = true;
     private boolean drawDistance     = true;
+    private boolean drawName         = true;
+    private boolean drawSkeleton     = true;
     private boolean drawFovCircle    = true;
     private boolean cornerBoxMode    = true;
     private boolean drawAimbotRay    = true;
@@ -104,6 +107,11 @@ public class ESPView extends View {
         hudTextPaint.setTypeface(Typeface.MONOSPACE);
         hudTextPaint.setFakeBoldText(true);
         hudTextPaint.setAntiAlias(true);
+
+        skeletonPaint.setStyle(Paint.Style.STROKE);
+        skeletonPaint.setColor(0xEEFFFFFF);
+        skeletonPaint.setStrokeWidth(2.0f);
+        skeletonPaint.setAntiAlias(true);
     }
 
     public void updatePlayers(float[] data) {
@@ -130,6 +138,8 @@ public class ESPView extends View {
     public void setDrawSnapline(boolean on)   { this.drawSnapline = on; postInvalidate(); }
     public void setDrawHealth(boolean on)     { this.drawHealth = on; postInvalidate(); }
     public void setDrawDistance(boolean on)   { this.drawDistance = on; postInvalidate(); }
+    public void setDrawName(boolean on)       { this.drawName = on; postInvalidate(); }
+    public void setDrawSkeleton(boolean on)   { this.drawSkeleton = on; postInvalidate(); }
     public void setDrawFovCircle(boolean on)  { this.drawFovCircle = on; postInvalidate(); }
     public void setCornerBoxMode(boolean on)  { this.cornerBoxMode = on; postInvalidate(); }
     public void setDrawAimbotRay(boolean on)  { this.drawAimbotRay = on; postInvalidate(); }
@@ -139,6 +149,8 @@ public class ESPView extends View {
     public boolean isDrawSnapline()  { return drawSnapline; }
     public boolean isDrawHealth()    { return drawHealth; }
     public boolean isDrawDistance()  { return drawDistance; }
+    public boolean isDrawName()      { return drawName; }
+    public boolean isDrawSkeleton()  { return drawSkeleton; }
     public boolean isDrawFovCircle() { return drawFovCircle; }
     public boolean isCornerBoxMode() { return cornerBoxMode; }
     public float   getFovRadius()    { return fovRadius; }
@@ -245,12 +257,17 @@ public class ESPView extends View {
             }
         }
 
-        // 2. Snapline từ đáy màn hình tới chân
+        // 2. ESP Skeleton (Khung xương)
+        if (drawSkeleton) {
+            drawSkeletonLines(canvas, x, top, bottom, w, h);
+        }
+
+        // 3. Snapline từ đáy màn hình tới chân
         if (drawSnapline) {
             canvas.drawLine(screenCX, screenH, x, bottom, snapPaint);
         }
 
-        // 3. Thanh Máu (HP Bar)
+        // 4. Thanh Máu (HP Bar)
         if (drawHealth) {
             final float barW = 6.0f;
             final float barSpacing = 4.0f;
@@ -273,11 +290,51 @@ public class ESPView extends View {
             canvas.drawRect(barLeft, bottom - currentBarH, barRight, bottom, hpPaint);
         }
 
-        // 4. Khoảng cách & Tên
-        if (drawDistance) {
-            int distInt = (int) dist;
-            canvas.drawText(label + " " + distInt + "m", left, top - 10.0f, textPaint);
+        // 5. Tên & Khoảng cách
+        if (drawName || drawDistance) {
+            StringBuilder sb = new StringBuilder();
+            if (drawName) sb.append(label).append(" ");
+            if (drawDistance) sb.append("[").append((int) dist).append("m]");
+            canvas.drawText(sb.toString().trim(), left, top - 10.0f, textPaint);
         }
+    }
+
+    private void drawSkeletonLines(Canvas canvas, float x, float top, float bottom, float w, float h) {
+        float headR = h * 0.08f;
+        float headY = top + headR;
+        float neckY = top + h * 0.18f;
+        float spineY = top + h * 0.45f;
+        float pelvisY = top + h * 0.55f;
+
+        // Đầu
+        canvas.drawCircle(x, headY, headR, skeletonPaint);
+
+        // Cổ và Xương sống
+        canvas.drawLine(x, headY + headR, x, spineY, skeletonPaint);
+        canvas.drawLine(x, spineY, x, pelvisY, skeletonPaint);
+
+        // Vai và Cánh tay
+        float shoulderW = w * 0.35f;
+        float elbowY = top + h * 0.35f;
+        float handY = top + h * 0.52f;
+        // Tay trái
+        canvas.drawLine(x, neckY, x - shoulderW, neckY + h * 0.04f, skeletonPaint);
+        canvas.drawLine(x - shoulderW, neckY + h * 0.04f, x - shoulderW - w * 0.1f, elbowY, skeletonPaint);
+        canvas.drawLine(x - shoulderW - w * 0.1f, elbowY, x - shoulderW - w * 0.15f, handY, skeletonPaint);
+        // Tay phải
+        canvas.drawLine(x, neckY, x + shoulderW, neckY + h * 0.04f, skeletonPaint);
+        canvas.drawLine(x + shoulderW, neckY + h * 0.04f, x + shoulderW + w * 0.1f, elbowY, skeletonPaint);
+        canvas.drawLine(x + shoulderW + w * 0.1f, elbowY, x + shoulderW + w * 0.15f, handY, skeletonPaint);
+
+        // Chân trái & Chân phải
+        float kneeY = top + h * 0.78f;
+        float legW = w * 0.28f;
+        // Chân trái
+        canvas.drawLine(x, pelvisY, x - legW * 0.6f, kneeY, skeletonPaint);
+        canvas.drawLine(x - legW * 0.6f, kneeY, x - legW, bottom, skeletonPaint);
+        // Chân phải
+        canvas.drawLine(x, pelvisY, x + legW * 0.6f, kneeY, skeletonPaint);
+        canvas.drawLine(x + legW * 0.6f, kneeY, x + legW, bottom, skeletonPaint);
     }
 
     private void drawCornerBox(Canvas canvas, float l, float t, float r, float b, float w, float h) {

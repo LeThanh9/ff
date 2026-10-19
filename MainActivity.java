@@ -341,15 +341,15 @@ public class MainActivity extends Activity {
 
     private void updatePatchStatusUI() {
         if (tvPatchStatus != null) {
-            boolean installed = PatchInstaller.isPatchInstalled();
-            if (installed) {
-                tvPatchStatus.setText("ĐÃ CÀI ĐẶT ✓");
-                tvPatchStatus.setTextColor(0xFF00FF66);
-                tvPatchStatus.setBackgroundColor(0x2000FF66);
+            boolean hasPatchFiles = PatchInstaller.isPatchInstalled();
+            if (hasPatchFiles) {
+                tvPatchStatus.setText("CÓ FILE VÁ (DỄ BỊ BAN) ⚠️");
+                tvPatchStatus.setTextColor(0xFFFF4444);
+                tvPatchStatus.setBackgroundColor(0x25FF4444);
             } else {
-                tvPatchStatus.setText("CHƯA CÀI ✗");
-                tvPatchStatus.setTextColor(0xFFFF5555);
-                tvPatchStatus.setBackgroundColor(0x20FF5555);
+                tvPatchStatus.setText("GAME GỐC AN TOÀN ✓");
+                tvPatchStatus.setTextColor(0xFF00FF66);
+                tvPatchStatus.setBackgroundColor(0x2500FF66);
             }
         }
     }

@@ -262,6 +262,12 @@ public class FloatingMenu {
         addSwitch(content, "Distance Indicator", true, isChecked -> {
             if (espView != null) espView.setDrawDistance(isChecked);
         });
+        addSwitch(content, "ESP Player Name (Tên kẻ địch)", espView != null && espView.isDrawName(), isChecked -> {
+            if (espView != null) espView.setDrawName(isChecked);
+        });
+        addSwitch(content, "ESP Skeleton (Khung xương người)", espView != null && espView.isDrawSkeleton(), isChecked -> {
+            if (espView != null) espView.setDrawSkeleton(isChecked);
+        });
         addSwitch(content, "Aimbot FOV Circle", true, isChecked -> {
             if (espView != null) espView.setDrawFovCircle(isChecked);
         });
