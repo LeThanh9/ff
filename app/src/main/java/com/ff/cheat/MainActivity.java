@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
                 startService(svcIntent);
             }
 
-            tvStatus.setText("Status: MENU NỔI ĐANG HIỂN THỊ ✓");
+            tvStatus.setText("Trạng thái: MENU NỔI ĐANG HIỂN THỊ ✓");
             tvStatus.setTextColor(0xFF00FFCC);
             Toast.makeText(this, "Đã hiển thị Menu Nổi trên màn hình!", Toast.LENGTH_SHORT).show();
         });
@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
                     CheatBridge.setTargetPid(ffPid);
                 }
             } else {
-                Toast.makeText(this, "Chạy chế độ No-Root: Dùng Không Gian Ảo cho ESP hoặc Wi-Fi Proxy cho Fake Lag!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Chạy chế độ Không Root: Dùng Không Gian Ảo cho ESP hoặc Proxy Wi-Fi cho Fake Lag!", Toast.LENGTH_SHORT).show();
             }
 
             boolean esp     = switchESP.isChecked();
@@ -140,13 +140,13 @@ public class MainActivity extends Activity {
 
             int result = nativeInject(esp, aimbot, fakeLag);
             if (result == 0) {
-                tvStatus.setText("Status: ACTIVE ✓ (Đã gắn vào Free Fire & Mở Menu)");
+                tvStatus.setText("Trạng thái: ĐANG HOẠT ĐỘNG ✓ (Đã kết nối Free Fire & Mở Menu)");
                 tvStatus.setTextColor(0xFF00FF66);
-                Toast.makeText(this, "Inject Thành Công & Đã Mở Menu!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Kích hoạt thành công & Đã mở Menu!", Toast.LENGTH_SHORT).show();
             } else {
-                tvStatus.setText("Status: MENU ACTIVE (Đang chờ Free Fire khởi động...)");
+                tvStatus.setText("Trạng thái: MENU ĐANG HOẠT ĐỘNG (Đang chờ Free Fire khởi động...)");
                 tvStatus.setTextColor(0xFFFFCC00);
-                Toast.makeText(this, "Đã mở Menu! Hãy mở Free Fire, engine sẽ tự động hook.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Đã mở Menu! Vui lòng mở Free Fire, hệ thống sẽ tự động liên kết.", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -156,10 +156,10 @@ public class MainActivity extends Activity {
             CheatBridge.applyFakeLag(false, 0, false);
             RootUtils.setUdpDesyncLag(false, 0);
             stopService(new Intent(this, OverlayService.class));
-            tvStatus.setText("Status: STOPPED (Đã tắt tất cả)");
+            tvStatus.setText("Trạng thái: ĐÃ DỪNG (Đã tắt tất cả)");
             tvStatus.setTextColor(0xFFAAAAAA);
             updateProxyInfo();
-            Toast.makeText(this, "Đã tắt Cheat Engine, Menu Nổi và Proxy", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đã tắt Hệ thống Hỗ trợ, Menu Nổi và Proxy", Toast.LENGTH_SHORT).show();
         });
 
         btnDumper.setOnClickListener(v -> {
@@ -257,13 +257,13 @@ public class MainActivity extends Activity {
     private void updateProxyInfo() {
         if (tvProxyInfo != null) {
             if (RootUtils.isUdpDesyncActive()) {
-                tvProxyInfo.setText("● UDP Ghost Desync [ĐANG CHẠY | " + currentLagMs + "ms]");
+                tvProxyInfo.setText("● UDP Ghost Desync [ĐANG CHẠY | " + currentLagMs + " ms]");
                 tvProxyInfo.setTextColor(0xFF00FF66);
             } else if (FakeLagProxy.getInstance().isRunning()) {
-                tvProxyInfo.setText("● SOCKS5/TCP Proxy: 127.0.0.1:8888 [ĐANG CHẠY | " + currentLagMs + "ms]");
+                tvProxyInfo.setText("● Proxy SOCKS5/TCP: 127.0.0.1:8888 [ĐANG CHẠY | " + currentLagMs + " ms]");
                 tvProxyInfo.setTextColor(0xFF00FFCC);
             } else {
-                tvProxyInfo.setText("○ Fake Lag Proxy: [ĐÃ TẮT]");
+                tvProxyInfo.setText("○ Proxy Fake Lag: [ĐÃ TẮT]");
                 tvProxyInfo.setTextColor(0xFF8888AA);
             }
         }
@@ -280,10 +280,10 @@ public class MainActivity extends Activity {
         boolean rootOk = RootUtils.isRootAvailable();
         if (tvRootStatus != null) {
             if (rootOk) {
-                tvRootStatus.setText("CHẾ ĐỘ: ROOT ✓");
+                tvRootStatus.setText("CHẾ ĐỘ: ĐÃ ROOT ✓");
                 tvRootStatus.setTextColor(0xFF00FF66);
             } else {
-                tvRootStatus.setText("CHẾ ĐỘ: NO-ROOT ✓");
+                tvRootStatus.setText("CHẾ ĐỘ: KHÔNG ROOT ✓");
                 tvRootStatus.setTextColor(0xFF00FFCC);
             }
         }
@@ -298,10 +298,10 @@ public class MainActivity extends Activity {
         }
         if (tvOverlayStatus != null) {
             if (overlayOk) {
-                tvOverlayStatus.setText("OVERLAY: ĐÃ CẤP ✓");
+                tvOverlayStatus.setText("LỚP PHỦ: ĐÃ CẤP QUYỀN ✓");
                 tvOverlayStatus.setTextColor(0xFF00FF66);
             } else {
-                tvOverlayStatus.setText("OVERLAY: CHƯA CẤP ✗");
+                tvOverlayStatus.setText("LỚP PHỦ: CHƯA CẤP QUYỀN ✗");
                 tvOverlayStatus.setTextColor(0xFFFFCC00);
             }
         }

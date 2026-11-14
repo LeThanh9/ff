@@ -35,7 +35,7 @@
                     android:fontFamily="monospace"/>
 
                 <TextView
-                    android:text="In-Game Floating Mod Menu &amp; ESP Engine"
+                    android:text="Menu Nổi Trong Game &amp; Hệ Thống ESP"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="11sp"
@@ -47,7 +47,7 @@
                 android:id="@+id/btnDumper"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="OFFSET DUMPER"
+                android:text="TRÍCH XUẤT OFFSET"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -67,7 +67,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ROOT: CHECKING..."
+                android:text="ROOT: ĐANG KIỂM TRA..."
                 android:textSize="11sp"
                 android:textColor="#FFCC00"
                 android:fontFamily="monospace"
@@ -81,7 +81,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="OVERLAY: CHECKING..."
+                android:text="LỚP PHỦ: ĐANG KIỂM TRA..."
                 android:textSize="11sp"
                 android:textColor="#FFCC00"
                 android:fontFamily="monospace"
@@ -140,7 +140,7 @@
                 android:id="@+id/switchESP"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ESP Overlay (Box, HP, Snapline, Khoảng cách)"
+                android:text="Lớp phủ ESP (Khung hộp, Máu, Đường dẫn, Khoảng cách)"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:checked="true"
@@ -150,7 +150,7 @@
                 android:id="@+id/switchAimbot"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Aimbot FOV Target Lock (Khóa đầu trong vòng FOV)"
+                android:text="Khóa mục tiêu Aimbot FOV (Tự động khóa mục tiêu trong vòng FOV)"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:checked="false"
@@ -166,7 +166,7 @@
                 android:layout_marginTop="10dp">
 
                 <TextView
-                    android:text="NETWORK PROXY &amp; FAKE LAG"
+                    android:text="MẠNG PROXY &amp; TẠO ĐỘ TRỄ (FAKE LAG)"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#00FFCC"
@@ -177,7 +177,7 @@
 
                 <TextView
                     android:id="@+id/tvProxyInfo"
-                    android:text="SOCKS5/TCP Proxy: 127.0.0.1:8888 [ĐÃ TẮT]"
+                    android:text="Proxy SOCKS5/TCP: 127.0.0.1:8888 [ĐÃ TẮT]"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#8888AA"
@@ -189,7 +189,7 @@
                     android:id="@+id/switchFakeLag"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Bật FakeLag Proxy (Mô phỏng trễ 127.0.0.1:8888)"
+                    android:text="Bật Proxy Fake Lag (Mô phỏng trễ 127.0.0.1:8888)"
                     android:textColor="#FFFFFF"
                     android:textSize="13sp"
                     android:checked="false"
@@ -218,7 +218,7 @@
                     android:id="@+id/switchRootNetem"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Kernel Netem (Chỉ áp dụng nếu máy có Root)"
+                    android:text="Kernel Netem (Chỉ áp dụng khi thiết bị đã Root)"
                     android:textColor="#FFCC00"
                     android:textSize="12sp"
                     android:checked="false"
@@ -303,7 +303,7 @@
         <!-- Status Box -->
         <TextView
             android:id="@+id/tvStatus"
-            android:text="Status: IDLE (Sẵn sàng inject)"
+            android:text="Trạng thái: CHỜ LỆNH (Sẵn sàng kích hoạt)"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
@@ -326,7 +326,7 @@
                 android:layout_width="0dp"
                 android:layout_height="52dp"
                 android:layout_weight="1"
-                android:text="START INJECT"
+                android:text="BẮT ĐẦU KÍCH HOẠT"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:backgroundTint="#00CC66"
@@ -355,7 +355,7 @@
                 android:id="@+id/btnStop"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="STOP TẤT CẢ (ENGINE + MENU + PROXY)"
+                android:text="DỪNG TẤT CẢ (HỆ THỐNG + MENU + PROXY)"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:backgroundTint="#D50000"/>

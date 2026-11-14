@@ -7,7 +7,7 @@
     android:background="#0A0A14">
 
     <TextView
-        android:text="FREE FIRE OFFSET DUMPER"
+        android:text="TRÍCH XUẤT OFFSET FREE FIRE"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="20sp"
@@ -27,7 +27,7 @@
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="DUMP"
+            android:text="TRÍCH XUẤT"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:backgroundTint="#00AA55"
@@ -38,7 +38,7 @@
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="APPLY"
+            android:text="ÁP DỤNG"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:backgroundTint="#FF6600"
@@ -50,7 +50,7 @@
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="SAVE JSON"
+            android:text="LƯU FILE JSON"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:backgroundTint="#0066CC"
@@ -81,7 +81,7 @@
             android:textSize="12sp"
             android:fontFamily="monospace"
             android:padding="10dp"
-            android:text="[Ready — Khởi động Free Fire trước, sau đó bấm DUMP]\n"/>
+            android:text="[Sẵn sàng — Vui lòng khởi động Free Fire trước, sau đó nhấn TRÍCH XUẤT]\n"/>
 
     </ScrollView>
 

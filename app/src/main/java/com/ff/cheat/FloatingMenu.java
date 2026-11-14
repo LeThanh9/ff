@@ -20,10 +20,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * FloatingMenu — Menu Nổi Tinh Gọn cho Free Fire
- * 1. ESP Đọc Bộ Nhớ (Vẽ Box & Skeleton)
- * 2. Vòng Aimbot FOV có thể kéo chỉnh bán kính to/nhỏ
- * 3. Tự động xoay góc nhìn camera khóa vào Cổ (Auto Neck View Rotation) khi đối thủ vào vòng
+ * FloatingMenu — Menu Nổi Hiện Đại Trong Trận (100% Tiếng Việt)
+ * Quản lý toàn bộ chức năng:
+ * 1. ESP Khung xương 3D, Hộp góc, Tâm định vị cổ, Thanh máu, Snapline
+ * 2. Vòng quét FOV & Tự động kéo tâm khóa cổ (Drag Headshot)
+ * 3. Quét nhanh PID Free Fire cho máy Root / Máy ảo
  */
 public class FloatingMenu {
 
@@ -39,13 +40,12 @@ public class FloatingMenu {
     private boolean isMenuShowing = false;
     private TextView tvGameStatus;
 
-    // Màu sắc Cyberpunk
-    private static final int COLOR_BG_PANEL     = 0xF20D0E1A; // Nền tối bóng mờ
-    private static final int COLOR_HEADER       = 0xFF14152A;
+    // Bảng màu Cyberpunk Neon cao cấp
+    private static final int COLOR_BG_PANEL     = 0xF20D0E1A;
     private static final int COLOR_BORDER       = 0xFF00FFCC; // Neon Cyan
     private static final int COLOR_ACCENT       = 0xFFFF1744; // Đỏ Neon
     private static final int COLOR_TEXT_WHITE   = 0xFFFFFFFF;
-    private static final int COLOR_TEXT_MUTED   = 0xFF8888AA;
+    private static final int COLOR_TEXT_MUTED   = 0xFF9999BB;
     private static final int COLOR_GREEN        = 0xFF00E676;
 
     public FloatingMenu(Context context, WindowManager wm, ESPView espView) {
@@ -69,7 +69,7 @@ public class FloatingMenu {
                 : WindowManager.LayoutParams.TYPE_PHONE;
     }
 
-    // ─── 1. BUBBLE ICON NỔI NHỎ GỌN TRÊN MÀN HÌNH ────────────────────────────
+    // ─── 1. BONG BÓNG BIỂU TƯỢNG NỔI NHỎ GỌN TRÊN MÀN HÌNH ─────────────────
     private void createBubbleView() {
         TextView bubble = new TextView(context);
         bubble.setText("⚡FF");
@@ -117,7 +117,7 @@ public class FloatingMenu {
                     case MotionEvent.ACTION_UP:
                         float diffX = Math.abs(event.getRawX() - initialTouchX);
                         float diffY = Math.abs(event.getRawY() - initialTouchY);
-                        if (diffX < 10 && diffY < 10) {
+                        if (diffX < 12 && diffY < 12) {
                             openMenu();
                         }
                         return true;
@@ -129,7 +129,7 @@ public class FloatingMenu {
         bubbleView = bubble;
     }
 
-    // ─── 2. FLOATING MENU PANEL TINH GỌN (GIAO DIỆN CHÍNH) ───────────────────
+    // ─── 2. BẢNG ĐIỀU KHIỂN MENU NỔI (100% TIẾNG VIỆT) ─────────────────────
     private void createMenuView() {
         LinearLayout panel = new LinearLayout(context);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -141,21 +141,21 @@ public class FloatingMenu {
         panelBg.setStroke(dp(2), COLOR_BORDER);
         panel.setBackground(panelBg);
 
-        // Header Bar
+        // Thanh Tiêu Đề
         LinearLayout header = new LinearLayout(context);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(0, 0, 0, dp(8));
 
         TextView title = new TextView(context);
-        title.setText("⚡ FF | ESP & AUTO AIM CỔ");
+        title.setText("⚡ MENU HỖ TRỢ FREE FIRE PRO");
         title.setTextColor(COLOR_BORDER);
-        title.setTextSize(14);
+        title.setTextSize(13);
         title.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
         LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
         header.addView(title, titleLp);
 
-        // Nút thu nhỏ
+        // Nút Đóng Thu Nhỏ
         Button btnClose = new Button(context);
         btnClose.setText("✕");
         btnClose.setTextColor(Color.WHITE);
@@ -173,7 +173,7 @@ public class FloatingMenu {
 
         panel.addView(header);
 
-        // Trạng thái kết nối Free Fire
+        // Trạng thái kết nối bộ nhớ game
         tvGameStatus = new TextView(context);
         tvGameStatus.setTextSize(11);
         tvGameStatus.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
@@ -183,7 +183,7 @@ public class FloatingMenu {
 
         // Nút Quét PID Free Fire
         Button btnScanPid = new Button(context);
-        btnScanPid.setText("🔍 QUÉT PID BỘ NHỚ FREE FIRE");
+        btnScanPid.setText("🔍 QUÉT PID FREE FIRE (GLOBAL / MAX / VNG)");
         btnScanPid.setTextSize(11);
         btnScanPid.setTextColor(Color.WHITE);
         btnScanPid.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
@@ -198,45 +198,54 @@ public class FloatingMenu {
             int pid = RootUtils.findFreeFirePid();
             if (pid > 0) {
                 CheatBridge.setTargetPid(pid);
-                Toast.makeText(context, "Đã kết nối PID Free Fire: " + pid, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Đã liên kết tiến trình Free Fire: PID " + pid, Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(context, "Chưa tìm thấy PID. Hãy mở game trước!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Chưa tìm thấy tiến trình. Hãy mở game trước!", Toast.LENGTH_SHORT).show();
             }
             updateGameStatusBanner();
         });
         panel.addView(btnScanPid, scanLp);
 
-        // Scrollable content
+        // Nội dung cuộn
         ScrollView scroll = new ScrollView(context);
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
 
         // ══════════════════════════════════════════════════════════════
-        // PHẦN 1: ESP ĐỌC BỘ NHỚ
+        // PHẦN 1: ESP HIỂN THỊ CHIẾN TRƯỜNG
         // ══════════════════════════════════════════════════════════════
-        addSectionHeader(content, "1. ESP ĐỌC BỘ NHỚ");
-        addSwitch(content, "Bật ESP Đọc Bộ Nhớ", true, isChecked -> {
+        addSectionHeader(content, "1. ESP HIỂN THỊ CHIẾN TRƯỜNG");
+        addSwitch(content, "Bật Lớp Phủ ESP", true, isChecked -> {
             CheatBridge.setESP(isChecked);
             if (espView != null) {
                 espView.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             }
         });
-        addSwitch(content, "🧪 Chế độ Mô phỏng (Test Preview)", espView != null && espView.isSimulationMode(), isChecked -> {
+        addSwitch(content, "🧪 Chế độ Mô phỏng Xem Trước", espView != null && espView.isSimulationMode(), isChecked -> {
             if (espView != null) espView.setSimulationMode(isChecked);
         });
-        addSwitch(content, "ESP Khung Hộp (Box)", espView != null && espView.isDrawBox(), isChecked -> {
-            if (espView != null) espView.setDrawBox(isChecked);
-        });
-        addSwitch(content, "ESP Khung Xương (Skeleton)", espView != null && espView.isDrawSkeleton(), isChecked -> {
+        addSwitch(content, "Vẽ Khung Xương Đầy Đủ (Skeleton 3D)", espView != null && espView.isDrawSkeleton(), isChecked -> {
             if (espView != null) espView.setDrawSkeleton(isChecked);
         });
+        addSwitch(content, "Vẽ Tâm Định Vị Cổ (Neck Crosshair)", espView != null && espView.isDrawNeckCrosshair(), isChecked -> {
+            if (espView != null) espView.setDrawNeckCrosshair(isChecked);
+        });
+        addSwitch(content, "Vẽ Khung Hộp Góc (Corner Box)", espView != null && espView.isDrawBox(), isChecked -> {
+            if (espView != null) espView.setDrawBox(isChecked);
+        });
+        addSwitch(content, "Vẽ Thanh Máu & Khoảng Cách Mét", espView != null && espView.isDrawHealthBar(), isChecked -> {
+            if (espView != null) espView.setDrawHealthBar(isChecked);
+        });
+        addSwitch(content, "Vẽ Đường Dẫn Hướng (Snapline từ đáy)", espView != null && espView.isDrawSnapline(), isChecked -> {
+            if (espView != null) espView.setDrawSnapline(isChecked);
+        });
 
         // ══════════════════════════════════════════════════════════════
-        // PHẦN 2: VÒNG AIMBOT & TỰ ĐỘNG KHÓA CỔ (XOAY GÓC NHÌN)
+        // PHẦN 2: TỰ ĐỘNG KHÓA CỔ & KÉO TÂM (AIMBOT)
         // ══════════════════════════════════════════════════════════════
-        addSectionHeader(content, "2. AIMBOT XOAY GÓC NHÌN VÀO CỔ");
+        addSectionHeader(content, "2. TỰ ĐỘNG KHÓA CỔ & KÉO TÂM (AIMBOT)");
 
-        addSwitch(content, "🎯 Vòng Aimbot FOV", espView != null && espView.isDrawFovCircle(), isChecked -> {
+        addSwitch(content, "🎯 Hiển Thị Vòng Tròn FOV", espView != null && espView.isDrawFovCircle(), isChecked -> {
             if (espView != null) espView.setDrawFovCircle(isChecked);
         });
 
@@ -266,29 +275,55 @@ public class FloatingMenu {
         });
         content.addView(sbFov);
 
-        // Công tắc tự động xoay góc nhìn camera khóa vào Cổ
-        addSwitch(content, "⚡ Tự động Xoay Góc Nhìn vào Cổ", RootUtils.isAutoAimDragEnabled(), isChecked -> {
+        // Công tắc tự động vuốt kéo tâm khóa vào Cổ
+        addSwitch(content, "⚡ Tự Động Vuốt Kéo Tâm Khóa Cổ", RootUtils.isAutoAimDragEnabled(), isChecked -> {
             RootUtils.setAutoAimDrag(isChecked);
             if (espView != null) espView.setAutoNeckAim(isChecked);
             CheatBridge.setAimbot(isChecked);
 
             if (isChecked && !RootUtils.isRootAvailable()) {
-                Toast.makeText(context, "Cần cấp quyền Root / Máy ảo để thực thi xoay góc nhìn!", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Lưu ý: Tính năng tự động vuốt màn hình cần cấp quyền Root / Máy ảo!", Toast.LENGTH_LONG).show();
             }
         });
 
+        // Thanh trượt điều chỉnh độ nhạy vuốt kéo tâm
+        float currentSens = RootUtils.getAimDragSensitivity();
+        TextView tvSens = new TextView(context);
+        tvSens.setText("Độ Nhạy Kéo Tâm: " + String.format("%.1fx", currentSens));
+        tvSens.setTextColor(COLOR_TEXT_WHITE);
+        tvSens.setTextSize(12);
+        tvSens.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        tvSens.setPadding(dp(4), dp(6), 0, 0);
+        content.addView(tvSens);
+
+        SeekBar sbSens = new SeekBar(context);
+        sbSens.setMax(20); // 0.5x đến 2.5x
+        int sensProgress = (int) Math.round((currentSens - 0.5f) * 10);
+        sbSens.setProgress(Math.max(0, Math.min(20, sensProgress)));
+        sbSens.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float sens = 0.5f + (progress * 0.1f);
+                tvSens.setText("Độ Nhạy Kéo Tâm: " + String.format("%.1fx", sens));
+                RootUtils.setAimDragSensitivity(sens);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        content.addView(sbSens);
+
         TextView tvHelp = new TextView(context);
-        tvHelp.setText("ℹ️ Khi đối thủ bước vào trong Vòng FOV, hệ thống sẽ tự động xoay góc nhìn camera hướng thẳng vào đốt sống cổ để hỗ trợ bạn vuốt bắn 100% Headshot.");
+        tvHelp.setText("ℹ️ Cơ chế Drag Headshot: Khi địch bước vào Vòng FOV, tâm ngắm được định vị chuẩn xác tại đốt cổ và hỗ trợ lực vuốt nhẹ hướng lên đầu, mang lại tỉ lệ 100% Headshot tự nhiên.");
         tvHelp.setTextColor(COLOR_TEXT_MUTED);
         tvHelp.setTextSize(10);
-        tvHelp.setPadding(dp(4), dp(4), dp(4), dp(8));
+        tvHelp.setPadding(dp(4), dp(6), dp(4), dp(10));
         content.addView(tvHelp);
 
         scroll.addView(content);
         panel.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f));
 
         menuParams = new WindowManager.LayoutParams(
-                dp(280), dp(370),
+                dp(290), dp(390),
                 getOverlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT

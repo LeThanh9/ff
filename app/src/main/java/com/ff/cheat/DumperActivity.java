@@ -44,15 +44,15 @@ public class DumperActivity extends Activity {
         btnSave.setOnClickListener(v -> {
             File dest = new File(getExternalFilesDir(null), "offsets.json");
             String result = nativeSaveOffsets(dest.getAbsolutePath());
-            appendLog("\n[SAVED] " + result + " -> " + dest.getAbsolutePath());
-            Toast.makeText(this, "Đã lưu offsets.json", Toast.LENGTH_SHORT).show();
+            appendLog("\n[ĐÃ LƯU] " + result + " -> " + dest.getAbsolutePath());
+            Toast.makeText(this, "Đã lưu offsets.json thành công", Toast.LENGTH_SHORT).show();
         });
 
         if (btnApply != null) {
             btnApply.setOnClickListener(v -> {
                 nativeApplyOffsets();
-                appendLog("\n[APPLIED] Offsets áp dụng trực tiếp vào Cheat Engine thành công!");
-                Toast.makeText(this, "Đã áp dụng Offsets!", Toast.LENGTH_SHORT).show();
+                appendLog("\n[ĐÃ ÁP DỤNG] Offset áp dụng trực tiếp vào Hệ thống thành công!");
+                Toast.makeText(this, "Đã áp dụng Offset thành công!", Toast.LENGTH_SHORT).show();
             });
         }
     }

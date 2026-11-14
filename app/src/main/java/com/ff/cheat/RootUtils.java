@@ -179,8 +179,11 @@ public class RootUtils {
         return isUdpDesyncActive.get();
     }
 
+    private static final java.util.concurrent.ExecutorService aimExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private static volatile float aimDragSensitivity = 1.2f;
+
     /**
-     * Tự động kéo tâm Aimbot nhẹ về phía đầu mục tiêu (Hỗ trợ máy Root / Giả lập)
+     * Tự động kéo tâm Aimbot nhẹ về phía đầu/cổ mục tiêu (Hỗ trợ máy Root / Máy ảo)
      */
     public static void setAutoAimDrag(boolean enable) {
         autoAimDragEnabled = enable;
@@ -190,26 +193,35 @@ public class RootUtils {
         return autoAimDragEnabled;
     }
 
+    public static void setAimDragSensitivity(float sensitivity) {
+        aimDragSensitivity = Math.max(0.5f, Math.min(3.0f, sensitivity));
+    }
+
+    public static float getAimDragSensitivity() {
+        return aimDragSensitivity;
+    }
+
     public static void triggerAimDrag(float screenCX, float screenCY, float targetX, float targetY) {
         if (!autoAimDragEnabled || !isRootAvailable()) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastAimTime < 80) return; // Giới hạn tần số kéo 12 lần/giây để mượt mà
+        if (now - lastAimTime < 65) return; // ~15 lần/giây, mượt mà chuẩn tần số cảm ứng
         lastAimTime = now;
 
         float dx = targetX - screenCX;
         float dy = targetY - screenCY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
-        if (dist < 10.0f || dist > 350.0f) return;
+        if (dist < 8.0f || dist > 450.0f) return;
 
-        // Tính bước kéo tâm nhẹ (Smooth step ~15-25px)
-        float step = Math.min(25.0f, dist * 0.35f);
-        float endX = screenCX + (dx / dist) * step;
-        float endY = screenCY + (dy / dist) * step;
+        // Tính bước kéo tâm mượt mà có nhân hệ số độ nhạy (Drag Headshot)
+        float baseStep = Math.min(30.0f, dist * 0.40f) * aimDragSensitivity;
+        float endX = screenCX + (dx / dist) * baseStep;
+        // Vuốt hơi nhích nhẹ lên phía đỉnh đầu để tạo quán tính kéo tâm headshot tự nhiên
+        float endY = screenCY + (dy / dist) * baseStep - 2.5f;
 
-        new Thread(() -> {
-            executeCommand("input swipe " + (int)screenCX + " " + (int)screenCY + " " + (int)endX + " " + (int)endY + " 25");
-        }).start();
+        aimExecutor.execute(() -> {
+            executeCommand("input swipe " + (int)screenCX + " " + (int)screenCY + " " + (int)endX + " " + (int)endY + " 20");
+        });
     }
 
     /**
