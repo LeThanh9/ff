@@ -296,6 +296,21 @@ public class FloatingMenu {
             RootUtils.setUseJCurveDrag(isChecked);
         });
 
+        OverlayService serviceInst = OverlayService.getInstance();
+        boolean isTriggerShowing = (serviceInst != null && serviceInst.getFloatingAimTrigger() != null && serviceInst.getFloatingAimTrigger().isShowing());
+        addSwitch(content, "🔥 Nút Trợ Lực Kéo Tâm (Đặt Đè Nút Bắn)", isTriggerShowing, isChecked -> {
+            OverlayService svc = OverlayService.getInstance();
+            if (svc != null && svc.getFloatingAimTrigger() != null) {
+                if (isChecked) {
+                    svc.getFloatingAimTrigger().show();
+                } else {
+                    svc.getFloatingAimTrigger().hide();
+                }
+            } else {
+                Toast.makeText(context, "Dịch vụ Lớp phủ chưa sẵn sàng", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         addSwitch(content, "📳 Rung Phản Hồi Khi Khóa Mục Tiêu", espView != null && espView.isEnableHapticFeedback(), isChecked -> {
             if (espView != null) espView.setEnableHapticFeedback(isChecked);
         });

@@ -252,6 +252,38 @@ public class RootUtils {
     }
 
     /**
+     * Kéo tâm trực tiếp khi chạm vào Nút Kéo Tâm Ảo (Tương thích 100% No-Root & Xiaomi HyperOS)
+     * Vuốt thẳng hoặc vuốt cong chữ J từ vị trí nút bắn lên đỉnh đầu trong ~30ms
+     */
+    public static void triggerManualAimDrag(float startX, float startY) {
+        final boolean hasAccessibility = AimAccessibilityService.isServiceRunning();
+        final boolean hasRoot = isRootAvailable();
+        if (!hasAccessibility && !hasRoot) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastAimTime < 80) return;
+        lastAimTime = now;
+
+        float dragDistance = 140.0f * aimDragSensitivity;
+        float endX = startX;
+        float endY = startY - dragDistance;
+
+        if (hasAccessibility) {
+            if (useJCurveDrag) {
+                float controlX = startX + 22.0f;
+                float controlY = startY + 18.0f;
+                AimAccessibilityService.performCurvedSwipe(startX, startY, controlX, controlY, endX, endY, 32);
+            } else {
+                AimAccessibilityService.performSwipe(startX, startY, endX, endY, 28);
+            }
+        } else if (hasRoot) {
+            aimExecutor.execute(() -> {
+                executeCommand("input swipe " + (int)startX + " " + (int)startY + " " + (int)endX + " " + (int)endY + " 30");
+            });
+        }
+    }
+
+    /**
      * Áp dụng mô phỏng độ trễ qua Traffic Control (tc netem) ở cấp Kernel Linux
      */
     public static boolean applyKernelLag(int delayMs) {

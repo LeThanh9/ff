@@ -32,6 +32,7 @@ public class OverlayService extends Service {
     private WindowManager wm;
     private ESPView espView;
     private FloatingMenu floatingMenu;
+    private FloatingAimTrigger floatingAimTrigger;
     private Thread renderThread;
     private volatile boolean isRunning = false;
     private int screenWidth = 1920;
@@ -47,6 +48,10 @@ public class OverlayService extends Service {
 
     public FloatingMenu getFloatingMenu() {
         return floatingMenu;
+    }
+
+    public FloatingAimTrigger getFloatingAimTrigger() {
+        return floatingAimTrigger;
     }
 
     @Override
@@ -95,6 +100,8 @@ public class OverlayService extends Service {
             wm.addView(espView, params);
             // Khởi tạo Floating Mod Menu tương tác nổi trên Free Fire
             floatingMenu = new FloatingMenu(this, wm, espView);
+            // Khởi tạo Nút Kéo Tâm Ảo (Tương thích 100% No-Root & Xiaomi HyperOS)
+            floatingAimTrigger = new FloatingAimTrigger(this, wm);
         }
 
         // Vòng lặp lấy tọa độ người chơi & Aimbot từ Native Engine (~60 FPS)
@@ -225,6 +232,11 @@ public class OverlayService extends Service {
         if (floatingMenu != null) {
             floatingMenu.destroy();
             floatingMenu = null;
+        }
+
+        if (floatingAimTrigger != null) {
+            floatingAimTrigger.destroy();
+            floatingAimTrigger = null;
         }
 
         if (wm != null && espView != null) {

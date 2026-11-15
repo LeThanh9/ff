@@ -336,6 +336,18 @@
                 android:lineSpacingExtra="3dp"
                 android:layout_marginBottom="12dp"/>
 
+            <!-- Nút Cài đặt Bản Vá Menu Hotfix OBB55 -->
+            <Button
+                android:id="@+id/btnInstallPatch"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="📦 CÀI ĐẶT BẢN VÁ MENU (HOTFIX IFIX OBB55)"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#0099FF"
+                android:layout_marginBottom="8dp"/>
+
             <!-- Nút dọn dẹp / khôi phục game gốc -->
             <Button
                 android:id="@+id/btnRemovePatch"

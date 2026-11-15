@@ -27,7 +27,7 @@ import java.lang.reflect.Method;
 public class MainActivity extends Activity {
 
     private Switch switchESP, switchAimbot, switchFakeLag, switchRootNetem, switchAntiBanFirewall;
-    private Button btnInject, btnStop, btnDumper, btnShowMenu, btnRemovePatch;
+    private Button btnInject, btnStop, btnDumper, btnShowMenu, btnRemovePatch, btnInstallPatch;
     private Button btnOpenAccessibility, btnXiaomiPerm, btnIgnoreBattery;
     private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvAccessibilityStatus, tvProxyInfo, tvLagValue, tvPatchStatus;
     private SeekBar sbFakeLag;
@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
         btnStop               = findViewById(R.id.btnStop);
         btnDumper             = findViewById(R.id.btnDumper);
         btnRemovePatch        = findViewById(R.id.btnRemovePatch);
+        btnInstallPatch       = findViewById(R.id.btnInstallPatch);
 
         btnOpenAccessibility  = findViewById(R.id.btnOpenAccessibility);
         btnXiaomiPerm         = findViewById(R.id.btnXiaomiPerm);
@@ -247,7 +248,35 @@ public class MainActivity extends Activity {
         switchESP.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setESP(isChecked));
         switchAimbot.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setAimbot(isChecked));
 
-        // ── 5. QUẢN LÝ DỌN DẸP / GỠ BỎ FILE VÁ (CHỐNG BAN NICK) ──
+        // ── 5. QUẢN LÝ BẢN VÁ MENU (HOTFIX IFIX OBB55) & DỌN DẸP ──
+        if (btnInstallPatch != null) {
+            btnInstallPatch.setOnClickListener(v -> {
+                btnInstallPatch.setEnabled(false);
+                if (tvStatus != null) tvStatus.setText("Trạng thái: Đang cài đặt bản vá vào Free Fire...");
+                PatchInstaller.installPatch(this, new PatchInstaller.InstallCallback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        runOnUiThread(() -> {
+                            btnInstallPatch.setEnabled(true);
+                            if (tvStatus != null) tvStatus.setText("Trạng thái: Đã cài đặt bản vá thành công ✓");
+                            updatePatchStatusUI();
+                            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            btnInstallPatch.setEnabled(true);
+                            if (tvStatus != null) tvStatus.setText("Trạng thái: Lỗi nạp bản vá ✗");
+                            updatePatchStatusUI();
+                            Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            });
+        }
+
         if (btnRemovePatch != null) {
             btnRemovePatch.setOnClickListener(v -> {
                 btnRemovePatch.setEnabled(false);
@@ -360,13 +389,13 @@ public class MainActivity extends Activity {
         if (tvPatchStatus != null) {
             boolean hasPatchFiles = PatchInstaller.isPatchInstalled();
             if (hasPatchFiles) {
-                tvPatchStatus.setText("CÓ FILE VÁ (DỄ BỊ BAN) ⚠️");
-                tvPatchStatus.setTextColor(0xFFFF4444);
-                tvPatchStatus.setBackgroundColor(0x25FF4444);
+                tvPatchStatus.setText("ĐÃ CÀI BẢN VÁ OBB55 ✓");
+                tvPatchStatus.setTextColor(0xFF00FFCC);
+                tvPatchStatus.setBackgroundColor(0x2500FFCC);
             } else {
-                tvPatchStatus.setText("GAME GỐC AN TOÀN ✓");
-                tvPatchStatus.setTextColor(0xFF00FF66);
-                tvPatchStatus.setBackgroundColor(0x2500FF66);
+                tvPatchStatus.setText("CHƯA CÀI BẢN VÁ (GỐC)");
+                tvPatchStatus.setTextColor(0xFF8888AA);
+                tvPatchStatus.setBackgroundColor(0x258888AA);
             }
         }
     }
