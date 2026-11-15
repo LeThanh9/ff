@@ -201,6 +201,10 @@ public class ESPView extends View {
         postInvalidate();
     }
 
+    public void setAimbotTarget(float x, float y) {
+        postInvalidate();
+    }
+
     public void setSimulationMode(boolean on)    { this.simulationMode = on; postInvalidate(); }
     public boolean isSimulationMode()           { return simulationMode; }
 
