@@ -201,7 +201,12 @@ public class ESPView extends View {
         postInvalidate();
     }
 
+    private float   externalAimbotX      = -1.0f;
+    private float   externalAimbotY      = -1.0f;
+
     public void setAimbotTarget(float x, float y) {
+        this.externalAimbotX = x;
+        this.externalAimbotY = y;
         postInvalidate();
     }
 
@@ -433,6 +438,11 @@ public class ESPView extends View {
         }
 
         // ── 6. TỰ ĐỘNG KHÓA VÀ VUỐT TÂM VÀO ĐỐT CỔ (DRAG HEADSHOT) ──
+        if (externalAimbotX > 0 && externalAimbotY > 0) {
+            bestTargetX = externalAimbotX;
+            bestTargetY = externalAimbotY;
+        }
+
         if (autoNeckAim && bestTargetX > 0 && bestTargetY > 0) {
             canvas.drawLine(screenCX, screenCY, bestTargetX, bestTargetY, aimRayPaint);
             canvas.drawCircle(bestTargetX, bestTargetY, 15.0f, aimLockPaint);

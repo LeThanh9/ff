@@ -25,6 +25,7 @@ public class PatchInstaller {
 
     public static final String PKG_FF_NORMAL = "com.dts.freefireth";
     public static final String PKG_FF_MAX    = "com.dts.freefiremax";
+    public static final String PKG_FF_VNG    = "com.vng.freefireth";
 
     private static final String[] BLOCKED_HOSTS = {
             "gin.freefireind.in",
@@ -49,6 +50,7 @@ public class PatchInstaller {
         if (ext != null) {
             list.add(new File(ext, "Android/data/" + PKG_FF_NORMAL + "/files"));
             list.add(new File(ext, "Android/data/" + PKG_FF_MAX + "/files"));
+            list.add(new File(ext, "Android/data/" + PKG_FF_VNG + "/files"));
         }
         return list;
     }

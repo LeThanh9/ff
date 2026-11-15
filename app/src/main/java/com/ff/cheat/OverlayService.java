@@ -34,6 +34,8 @@ public class OverlayService extends Service {
     private FloatingMenu floatingMenu;
     private Thread renderThread;
     private volatile boolean isRunning = false;
+    private int screenWidth = 1920;
+    private int screenHeight = 1080;
 
     public static OverlayService getInstance() {
         return instance;
@@ -61,7 +63,9 @@ public class OverlayService extends Service {
         DisplayMetrics metrics = new DisplayMetrics();
         if (wm != null && wm.getDefaultDisplay() != null) {
             wm.getDefaultDisplay().getRealMetrics(metrics);
-            CheatBridge.setScreenSize(metrics.widthPixels, metrics.heightPixels);
+            screenWidth = metrics.widthPixels > 0 ? metrics.widthPixels : 1920;
+            screenHeight = metrics.heightPixels > 0 ? metrics.heightPixels : 1080;
+            CheatBridge.setScreenSize(screenWidth, screenHeight);
         }
 
         espView = new ESPView(this);
@@ -125,8 +129,8 @@ public class OverlayService extends Service {
                             espView.setAimbotTarget(targetX, targetY);
                         }
                         if (RootUtils.isAutoAimDragEnabled()) {
-                            int scrW = espView != null ? espView.getWidth() : 1920;
-                            int scrH = espView != null ? espView.getHeight() : 1080;
+                            int scrW = (espView != null && espView.getWidth() > 0) ? espView.getWidth() : screenWidth;
+                            int scrH = (espView != null && espView.getHeight() > 0) ? espView.getHeight() : screenHeight;
                             RootUtils.triggerAimDrag(scrW * 0.5f, scrH * 0.5f, targetX, targetY);
                         }
                     } else {
