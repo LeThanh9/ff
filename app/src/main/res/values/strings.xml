@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Dịch Vụ Hỗ Trợ Free Fire</string>
     <string name="channel_name">Kênh Thông Báo Lớp Phủ FF</string>
+    <string name="accessibility_service_desc">Dịch vụ hỗ trợ tự động vuốt tâm (AimDrag) mượt mà cho máy không Root (No-Root), Xiaomi HyperOS và Android 14.</string>
 </resources>

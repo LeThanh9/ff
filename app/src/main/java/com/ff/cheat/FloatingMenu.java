@@ -281,10 +281,29 @@ public class FloatingMenu {
             if (espView != null) espView.setAutoNeckAim(isChecked);
             CheatBridge.setAimbot(isChecked);
 
-            if (isChecked && !RootUtils.isRootAvailable()) {
-                Toast.makeText(context, "Lưu ý: Tính năng tự động vuốt màn hình cần cấp quyền Root / Máy ảo!", Toast.LENGTH_LONG).show();
+            if (isChecked && !RootUtils.isAimDragSupported()) {
+                Toast.makeText(context, "Lưu ý máy No-Root / Xiaomi: Hãy bật 'Dịch Vụ Trợ Năng' để tự động vuốt tâm!", Toast.LENGTH_LONG).show();
             }
         });
+
+        // Nút mở nhanh Trợ Năng cho máy No-Root / Xiaomi HyperOS
+        Button btnQuickAccess = new Button(context);
+        btnQuickAccess.setText("⚙️ CÀI ĐẶT TRỢ NĂNG (CHO MÁY NO-ROOT)");
+        btnQuickAccess.setTextSize(10);
+        btnQuickAccess.setTextColor(Color.WHITE);
+        btnQuickAccess.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        GradientDrawable accBg = new GradientDrawable();
+        accBg.setColor(0xFF1B2E4B);
+        accBg.setCornerRadius(dp(6));
+        accBg.setStroke(dp(1), 0xFF00AAFF);
+        btnQuickAccess.setBackground(accBg);
+        LinearLayout.LayoutParams accLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(30));
+        accLp.setMargins(dp(2), dp(2), dp(2), dp(6));
+        btnQuickAccess.setOnClickListener(v -> {
+            AimAccessibilityService.openAccessibilitySettings(context);
+            Toast.makeText(context, "Bật 'Dịch Vụ Hỗ Trợ Free Fire' để vuốt tâm không cần Root", Toast.LENGTH_SHORT).show();
+        });
+        content.addView(btnQuickAccess, accLp);
 
         // Thanh trượt điều chỉnh độ nhạy vuốt kéo tâm
         float currentSens = RootUtils.getAimDragSensitivity();

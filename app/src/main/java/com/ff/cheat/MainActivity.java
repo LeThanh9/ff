@@ -1,24 +1,36 @@
 package com.ff.cheat;
 
 import android.app.Activity;
+import android.app.AppOpsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.os.Process;
 import android.provider.Settings;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.lang.reflect.Method;
 
+/**
+ * MainActivity — Màn hình quản trị trung tâm
+ * Tối ưu hóa 100% cho máy Không Root (No-Root), Xiaomi HyperOS / MIUI, Samsung OneUI,
+ * ColorOS, và Android 8.0 đến Android 14/15.
+ */
 public class MainActivity extends Activity {
 
     private Switch switchESP, switchAimbot, switchFakeLag, switchRootNetem, switchAntiBanFirewall;
     private Button btnInject, btnStop, btnDumper, btnShowMenu, btnRemovePatch;
-    private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvProxyInfo, tvLagValue, tvPatchStatus;
-    private android.widget.SeekBar sbFakeLag;
+    private Button btnOpenAccessibility, btnXiaomiPerm, btnIgnoreBattery;
+    private TextView tvStatus, tvRootStatus, tvOverlayStatus, tvAccessibilityStatus, tvProxyInfo, tvLagValue, tvPatchStatus;
+    private SeekBar sbFakeLag;
     private int currentLagMs = 150;
 
     private static final int REQUEST_OVERLAY_PERMISSION = 1001;
@@ -37,14 +49,21 @@ public class MainActivity extends Activity {
         switchFakeLag         = findViewById(R.id.switchFakeLag);
         switchRootNetem       = findViewById(R.id.switchRootNetem);
         switchAntiBanFirewall = findViewById(R.id.switchAntiBanFirewall);
+
         btnInject             = findViewById(R.id.btnInject);
         btnShowMenu           = findViewById(R.id.btnShowMenu);
         btnStop               = findViewById(R.id.btnStop);
         btnDumper             = findViewById(R.id.btnDumper);
         btnRemovePatch        = findViewById(R.id.btnRemovePatch);
+
+        btnOpenAccessibility  = findViewById(R.id.btnOpenAccessibility);
+        btnXiaomiPerm         = findViewById(R.id.btnXiaomiPerm);
+        btnIgnoreBattery      = findViewById(R.id.btnIgnoreBattery);
+
         tvStatus              = findViewById(R.id.tvStatus);
         tvRootStatus          = findViewById(R.id.tvRootStatus);
         tvOverlayStatus       = findViewById(R.id.tvOverlayStatus);
+        tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus);
         tvProxyInfo           = findViewById(R.id.tvProxyInfo);
         tvLagValue            = findViewById(R.id.tvLagValue);
         tvPatchStatus         = findViewById(R.id.tvPatchStatus);
@@ -52,6 +71,22 @@ public class MainActivity extends Activity {
 
         refreshSystemStatus();
         updateProxyInfo();
+
+        // ── 0. NÚT THIẾT LẬP NHANH CHO MÁY NO-ROOT & XIAOMI HYPEROS ──
+        if (btnOpenAccessibility != null) {
+            btnOpenAccessibility.setOnClickListener(v -> {
+                AimAccessibilityService.openAccessibilitySettings(this);
+                Toast.makeText(this, "Tìm 'Dịch Vụ Hỗ Trợ Free Fire' và BẬT công tắc Trợ Năng", Toast.LENGTH_LONG).show();
+            });
+        }
+
+        if (btnXiaomiPerm != null) {
+            btnXiaomiPerm.setOnClickListener(v -> openXiaomiPermissionsEditor(this));
+        }
+
+        if (btnIgnoreBattery != null) {
+            btnIgnoreBattery.setOnClickListener(v -> requestIgnoreBatteryOptimizations(this));
+        }
 
         // Lắng nghe sự kiện trạng thái từ FakeLagProxy
         FakeLagProxy.getInstance().setListener(new FakeLagProxy.ProxyListener() {
@@ -70,7 +105,7 @@ public class MainActivity extends Activity {
             public void onStatsUpdated(long bytes, long packets) {}
         });
 
-        // Tự động load file offsets.json nếu đã từng dump thành công
+        // Tự động nạp file offsets.json nếu đã từng dump thành công
         File offsetsFile = new File(getExternalFilesDir(null), "offsets.json");
         if (offsetsFile.exists()) {
             boolean loaded = CheatBridge.loadOffsets(offsetsFile.getAbsolutePath());
@@ -99,14 +134,13 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Đã hiển thị Menu Nổi trên màn hình!", Toast.LENGTH_SHORT).show();
         });
 
-        // ── 2. NÚT INJECT VÀO GAME & MỞ MENU ──
+        // ── 2. NÚT KÍCH HOẠT VÀO GAME & MỞ MENU ──
         btnInject.setOnClickListener(v -> {
             if (!checkOverlayPermission()) {
                 Toast.makeText(this, "Vui lòng cấp quyền 'Vẽ trên ứng dụng khác'!", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            // Chuẩn bị môi trường nếu có root
             boolean rootOk = RootUtils.isRootAvailable();
             if (rootOk) {
                 RootUtils.prepareEnvironment();
@@ -115,14 +149,13 @@ public class MainActivity extends Activity {
                     CheatBridge.setTargetPid(ffPid);
                 }
             } else {
-                Toast.makeText(this, "Chạy chế độ Không Root: Dùng Không Gian Ảo cho ESP hoặc Proxy Wi-Fi cho Fake Lag!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Chế độ Không Root (No-Root): Menu Nổi, Trợ Năng Kéo Tâm và Proxy chạy trực tiếp 100%!", Toast.LENGTH_LONG).show();
             }
 
             boolean esp     = switchESP.isChecked();
             boolean aimbot  = switchAimbot.isChecked();
             boolean fakeLag = switchFakeLag.isChecked();
 
-            // Khởi động Overlay Service hiển thị Menu Nổi ngay lập tức
             Intent svcIntent = new Intent(this, OverlayService.class);
             svcIntent.setAction(OverlayService.ACTION_SHOW_MENU);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -150,7 +183,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        // ── 3. NÚT TẮT TOÀN BỘ ──
+        // ── 3. NÚT DỪNG TOÀN BỘ ──
         btnStop.setOnClickListener(v -> {
             nativeStop();
             CheatBridge.applyFakeLag(false, 0, false);
@@ -168,9 +201,9 @@ public class MainActivity extends Activity {
 
         // ── 4. LẮNG NGHE ĐIỀU KHIỂN FAKE LAG & PROXY ──
         if (sbFakeLag != null) {
-            sbFakeLag.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            sbFakeLag.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
-                public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     currentLagMs = 50 + progress;
                     if (tvLagValue != null) {
                         tvLagValue.setText("Độ trễ Fake Lag: " + currentLagMs + " ms");
@@ -184,8 +217,8 @@ public class MainActivity extends Activity {
                         updateProxyInfo();
                     }
                 }
-                @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
             });
         }
 
@@ -215,7 +248,6 @@ public class MainActivity extends Activity {
         switchAimbot.setOnCheckedChangeListener((btn, isChecked) -> CheatBridge.setAimbot(isChecked));
 
         // ── 5. QUẢN LÝ DỌN DẸP / GỠ BỎ FILE VÁ (CHỐNG BAN NICK) ──
-
         if (btnRemovePatch != null) {
             btnRemovePatch.setOnClickListener(v -> {
                 btnRemovePatch.setEnabled(false);
@@ -276,7 +308,7 @@ public class MainActivity extends Activity {
     }
 
     private void refreshSystemStatus() {
-        // Kiểm tra Root / Chế độ hoạt động
+        // 1. Kiểm tra Root
         boolean rootOk = RootUtils.isRootAvailable();
         if (tvRootStatus != null) {
             if (rootOk) {
@@ -288,21 +320,38 @@ public class MainActivity extends Activity {
             }
         }
 
-        // Cập nhật trạng thái bản vá
+        // 2. Cập nhật trạng thái bản vá
         updatePatchStatusUI();
 
-        // Kiểm tra Overlay
+        // 3. Kiểm tra Overlay & Xiaomi Popup
         boolean overlayOk = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             overlayOk = Settings.canDrawOverlays(this);
         }
+        boolean xiaomiPopupOk = checkXiaomiPopupPermission(this);
+
         if (tvOverlayStatus != null) {
-            if (overlayOk) {
+            if (overlayOk && xiaomiPopupOk) {
                 tvOverlayStatus.setText("LỚP PHỦ: ĐÃ CẤP QUYỀN ✓");
                 tvOverlayStatus.setTextColor(0xFF00FF66);
             } else {
-                tvOverlayStatus.setText("LỚP PHỦ: CHƯA CẤP QUYỀN ✗");
+                tvOverlayStatus.setText("LỚP PHỦ: CHƯA CẤP ✗");
                 tvOverlayStatus.setTextColor(0xFFFFCC00);
+            }
+        }
+
+        // 4. Kiểm tra Trợ Năng AimDrag (No-Root)
+        if (tvAccessibilityStatus != null) {
+            boolean accessOk = AimAccessibilityService.isServiceRunning() || AimAccessibilityService.isAccessibilityEnabled(this);
+            if (accessOk) {
+                tvAccessibilityStatus.setText("TRỢ NĂNG (AIM): BẬT ✓");
+                tvAccessibilityStatus.setTextColor(0xFF00FF66);
+            } else if (rootOk) {
+                tvAccessibilityStatus.setText("TRỢ NĂNG: ROOT SWIPE ✓");
+                tvAccessibilityStatus.setTextColor(0xFF00FF66);
+            } else {
+                tvAccessibilityStatus.setText("TRỢ NĂNG: CHƯA BẬT ⚠️");
+                tvAccessibilityStatus.setTextColor(0xFFFFCC00);
             }
         }
     }
@@ -334,6 +383,68 @@ public class MainActivity extends Activity {
             }
         }
         return true;
+    }
+
+    // ── HỖ TRỢ ĐẶC THÙ XIAOMI HYPEROS / MIUI & MÁY NO-ROOT ──
+
+    public static boolean isXiaomiDevice() {
+        String man = Build.MANUFACTURER;
+        String brand = Build.BRAND;
+        return (man != null && (man.equalsIgnoreCase("Xiaomi") || man.equalsIgnoreCase("Redmi") || man.equalsIgnoreCase("POCO")))
+            || (brand != null && (brand.equalsIgnoreCase("Xiaomi") || brand.equalsIgnoreCase("Redmi") || brand.equalsIgnoreCase("POCO")));
+    }
+
+    public static boolean checkXiaomiPopupPermission(Context context) {
+        if (!isXiaomiDevice()) return true;
+        try {
+            AppOpsManager ops = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+            Method method = ops.getClass().getMethod("checkOpNoThrow", int.class, int.class, String.class);
+            int op = 10021; // OP_BACKGROUND_START_ACTIVITY (Hiển thị cửa sổ pop-up khi chạy dưới nền)
+            int result = (int) method.invoke(ops, op, Process.myUid(), context.getPackageName());
+            return result == AppOpsManager.MODE_ALLOWED;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public static void openXiaomiPermissionsEditor(Context context) {
+        try {
+            Intent intent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+            intent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
+            intent.putExtra("extra_pkgname", context.getPackageName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            Toast.makeText(context, "Xiaomi HyperOS: Hãy bật 'Hiển thị cửa sổ pop-up khi chạy dưới nền'!", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            try {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + context.getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public static void requestIgnoreBatteryOptimizations(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+                if (pm != null && !pm.isIgnoringBatteryOptimizations(context.getPackageName())) {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + context.getPackageName()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } else {
+                    Toast.makeText(context, "Đã bỏ qua tối ưu pin (Hoạt động nền an toàn) ✓", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception ignored) {}
+            }
+        }
     }
 
     // JNI declarations

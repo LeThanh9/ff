@@ -11,7 +11,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Top Header Bar -->
+        <!-- Thanh Tiêu Đề Trên Cùng -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -26,7 +26,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:text="FREE FIRE MASTER"
+                    android:text="FREE FIRE MASTER PRO"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="20sp"
@@ -35,11 +35,11 @@
                     android:fontFamily="monospace"/>
 
                 <TextView
-                    android:text="Menu Nổi Trong Game &amp; Hệ Thống ESP"
+                    android:text="Hỗ Trợ Toàn Diện: Máy Không Root (No-Root), Xiaomi HyperOS &amp; Root"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="11sp"
-                    android:textColor="#7A7A9E"
+                    android:textColor="#8888BB"
                     android:fontFamily="monospace"/>
             </LinearLayout>
 
@@ -55,26 +55,26 @@
                 android:paddingHorizontal="14dp"/>
         </LinearLayout>
 
-        <!-- System & Permission Info Badges -->
+        <!-- Thẻ Trạng Thái Hệ Thống (Root / Lớp Phủ / Trợ Năng AimDrag) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="14dp">
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:id="@+id/tvRootStatus"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ROOT: ĐANG KIỂM TRA..."
+                android:text="CHẾ ĐỘ: ĐANG KIỂM TRA..."
                 android:textSize="11sp"
                 android:textColor="#FFCC00"
                 android:fontFamily="monospace"
                 android:background="#15172C"
                 android:padding="8dp"
                 android:gravity="center"
-                android:layout_marginEnd="6dp"/>
+                android:layout_marginEnd="4dp"/>
 
             <TextView
                 android:id="@+id/tvOverlayStatus"
@@ -88,36 +88,95 @@
                 android:background="#15172C"
                 android:padding="8dp"
                 android:gravity="center"
-                android:layout_marginStart="6dp"/>
+                android:layout_marginHorizontal="4dp"/>
+
+            <TextView
+                android:id="@+id/tvAccessibilityStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TRỢ NĂNG (AIM): CHỜ..."
+                android:textSize="11sp"
+                android:textColor="#FFCC00"
+                android:fontFamily="monospace"
+                android:background="#15172C"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginStart="4dp"/>
         </LinearLayout>
 
-        <!-- In-game Floating Menu Hint Card -->
+        <!-- Khối Thiết Lập Nhanh Cho Máy No-Root & Xiaomi HyperOS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:background="#141933"
             android:padding="12dp"
-            android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
 
             <TextView
-                android:text="⚡"
+                android:text="⚡ CẤU HÌNH NHANH (MÁY NO-ROOT &amp; XIAOMI HYPEROS)"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="22sp"
-                android:layout_marginEnd="10dp"/>
+                android:textColor="#00FFCC"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp"/>
 
             <TextView
-                android:text="HỖ TRỢ CẢ ROOT &amp; NO-ROOT: Menu Nổi và Proxy Fake Lag (127.0.0.1:8888) hoạt động trực tiếp 100% không cần Root. Nếu muốn đọc RAM ESP/Aimbot trên máy No-Root, hãy chạy app qua Không Gian Ảo (VMOS, F1VM, DualSpace)."
+                android:text="1. Vuốt Kéo Tâm Không Root (No-Root): Sử dụng dịch vụ Trợ Năng (Accessibility Gesture) chuẩn Google Android giúp vuốt tâm mượt mà 100% không cần can thiệp Root.\n2. Xiaomi HyperOS / MIUI: Bắt buộc bật 'Hiển thị cửa sổ pop-up khi chạy dưới nền' và 'Bỏ qua tối ưu pin' để menu không bị hệ thống tắt khi vào game.\n3. Nếu Android 13/14 báo 'Cài đặt bị hạn chế' (Restricted Setting): Vào Thông tin ứng dụng -> Bấm dấu 3 chấm góc trên bên phải -> Chọn 'Cho phép cài đặt bị hạn chế'."
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#C5D0F0"
-                android:textSize="12sp"
-                android:lineSpacingExtra="3dp"/>
+                android:textSize="11sp"
+                android:lineSpacingExtra="3dp"
+                android:layout_marginBottom="10dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnOpenAccessibility"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="BẬT TRỢ NĂNG AIM"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#0088FF"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
+                    android:id="@+id/btnXiaomiPerm"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="QUYỀN HYPEROS"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#0A0B14"
+                    android:backgroundTint="#FFB300"
+                    android:layout_marginHorizontal="4dp"/>
+
+                <Button
+                    android:id="@+id/btnIgnoreBattery"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="TẮT TỐI ƯU PIN"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2E7D32"
+                    android:layout_marginStart="4dp"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Card Features Configuration -->
+        <!-- Thẻ Cấu Hình Chức Năng Ban Đầu -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -140,9 +199,9 @@
                 android:id="@+id/switchESP"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Lớp phủ ESP (Khung hộp, Máu, Đường dẫn, Khoảng cách)"
+                android:text="Lớp phủ ESP (Khung xương, Khung hộp, Máu, Snapline, Khoảng cách)"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:checked="true"
                 android:paddingVertical="8dp"/>
 
@@ -150,10 +209,10 @@
                 android:id="@+id/switchAimbot"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Khóa mục tiêu Aimbot FOV (Tự động khóa mục tiêu trong vòng FOV)"
+                android:text="Kéo Tâm &amp; Tự Động Khóa Cổ (Vòng FOV Chuẩn Headshot)"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:checked="false"
+                android:textSize="13sp"
+                android:checked="true"
                 android:paddingVertical="8dp"/>
 
             <!-- Proxy & Fake Lag Card -->
@@ -228,7 +287,7 @@
 
         </LinearLayout>
 
-        <!-- Card: Chế độ An Toàn Chạy Ngầm (Không Can Thiệp File Game) -->
+        <!-- Thẻ Chế Độ An Toàn Chạy Ngầm -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -269,7 +328,7 @@
             </LinearLayout>
 
             <TextView
-                android:text="✓ An Toàn Tuyệt Đối: Ứng dụng chạy lớp phủ ngầm (Overlay) và Proxy Local, KHÔNG can thiệp, KHÔNG ghi đè bất kỳ file nào vào thư mục game, tránh 100% việc bị Garena quét hash file và khóa nick!"
+                android:text="✓ An Toàn Tuyệt Đối: Ứng dụng chạy lớp phủ ngầm (Overlay) và Dịch vụ Trợ Năng cảm ứng, KHÔNG can thiệp, KHÔNG ghi đè bất kỳ file nào vào thư mục game, tránh 100% việc bị Garena quét hash file và khóa nick!"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#C5D0F0"
@@ -300,7 +359,7 @@
                 android:paddingVertical="4dp"/>
         </LinearLayout>
 
-        <!-- Status Box -->
+        <!-- Hộp Hiển Thị Trạng Thái Hoạt Động -->
         <TextView
             android:id="@+id/tvStatus"
             android:text="Trạng thái: CHỜ LỆNH (Sẵn sàng kích hoạt)"
@@ -314,7 +373,7 @@
             android:background="#0E101D"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Action Buttons Row 1: INJECT & SHOW MENU -->
+        <!-- Hàng Nút Hành Động 1: KÍCH HOẠT & HIỂN THỊ MENU -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -345,7 +404,7 @@
 
         </LinearLayout>
 
-        <!-- Action Buttons Row 2: STOP -->
+        <!-- Hàng Nút Hành Động 2: DỪNG TẤT CẢ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

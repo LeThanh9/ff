@@ -201,8 +201,16 @@ public class RootUtils {
         return aimDragSensitivity;
     }
 
+    public static boolean isAimDragSupported() {
+        return AimAccessibilityService.isServiceRunning() || isRootAvailable();
+    }
+
     public static void triggerAimDrag(float screenCX, float screenCY, float targetX, float targetY) {
-        if (!autoAimDragEnabled || !isRootAvailable()) return;
+        if (!autoAimDragEnabled) return;
+
+        final boolean hasAccessibility = AimAccessibilityService.isServiceRunning();
+        final boolean hasRoot = isRootAvailable();
+        if (!hasAccessibility && !hasRoot) return;
 
         long now = System.currentTimeMillis();
         if (now - lastAimTime < 65) return; // ~15 lần/giây, mượt mà chuẩn tần số cảm ứng
@@ -219,9 +227,15 @@ public class RootUtils {
         // Vuốt hơi nhích nhẹ lên phía đỉnh đầu để tạo quán tính kéo tâm headshot tự nhiên
         float endY = screenCY + (dy / dist) * baseStep - 2.5f;
 
-        aimExecutor.execute(() -> {
-            executeCommand("input swipe " + (int)screenCX + " " + (int)screenCY + " " + (int)endX + " " + (int)endY + " 20");
-        });
+        // Ưu tiên chạy qua Dịch vụ Trợ Năng (Chuẩn No-Root của Google Android & Xiaomi HyperOS)
+        if (hasAccessibility) {
+            AimAccessibilityService.performSwipe(screenCX, screenCY, endX, endY, 20);
+        } else {
+            // Chạy qua lệnh Root Shell nếu máy đã Root
+            aimExecutor.execute(() -> {
+                executeCommand("input swipe " + (int)screenCX + " " + (int)screenCY + " " + (int)endX + " " + (int)endY + " 20");
+            });
+        }
     }
 
     /**
