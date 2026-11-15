@@ -182,9 +182,16 @@ public class RootUtils {
     private static final java.util.concurrent.ExecutorService aimExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
     private static volatile float aimDragSensitivity = 1.2f;
 
-    /**
-     * Tự động kéo tâm Aimbot nhẹ về phía đầu/cổ mục tiêu (Hỗ trợ máy Root / Máy ảo)
-     */
+    private static volatile boolean useJCurveDrag = true; // Kéo tâm chữ J (J-Curve Headshot)
+
+    public static void setUseJCurveDrag(boolean enable) {
+        useJCurveDrag = enable;
+    }
+
+    public static boolean isUseJCurveDrag() {
+        return useJCurveDrag;
+    }
+
     public static void setAutoAimDrag(boolean enable) {
         autoAimDragEnabled = enable;
     }
@@ -222,14 +229,20 @@ public class RootUtils {
         if (dist < 8.0f || dist > 450.0f) return;
 
         // Tính bước kéo tâm mượt mà có nhân hệ số độ nhạy (Drag Headshot)
-        float baseStep = Math.min(30.0f, dist * 0.40f) * aimDragSensitivity;
+        float baseStep = Math.min(32.0f, dist * 0.42f) * aimDragSensitivity;
         float endX = screenCX + (dx / dist) * baseStep;
-        // Vuốt hơi nhích nhẹ lên phía đỉnh đầu để tạo quán tính kéo tâm headshot tự nhiên
-        float endY = screenCY + (dy / dist) * baseStep - 2.5f;
+        float endY = screenCY + (dy / dist) * baseStep - 5.0f; // Nhích lên đỉnh đầu
 
         // Ưu tiên chạy qua Dịch vụ Trợ Năng (Chuẩn No-Root của Google Android & Xiaomi HyperOS)
         if (hasAccessibility) {
-            AimAccessibilityService.performSwipe(screenCX, screenCY, endX, endY, 20);
+            if (useJCurveDrag) {
+                // Điểm uốn chữ J (vuốt nhẹ xuống ~12px rồi cong gắt lên đầu)
+                float controlX = screenCX + (dx / dist) * 8.0f;
+                float controlY = screenCY + 14.0f;
+                AimAccessibilityService.performCurvedSwipe(screenCX, screenCY, controlX, controlY, endX, endY, 22);
+            } else {
+                AimAccessibilityService.performSwipe(screenCX, screenCY, endX, endY, 20);
+            }
         } else {
             // Chạy qua lệnh Root Shell nếu máy đã Root
             aimExecutor.execute(() -> {

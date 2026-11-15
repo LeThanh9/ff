@@ -12,6 +12,7 @@
 
     <!-- Bỏ qua tối ưu hóa pin cho Xiaomi HyperOS / Samsung không bị tắt nền -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <!-- Cấp quyền Network cho Fake Lag Proxy Server -->
     <uses-permission android:name="android.permission.INTERNET"/>

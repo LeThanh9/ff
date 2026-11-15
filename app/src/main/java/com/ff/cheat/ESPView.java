@@ -5,18 +5,24 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.View;
 
 /**
  * ESPView — Bộ kết xuất Lớp phủ ESP & Kéo tâm (Drag Headshot) hiệu năng cao
- * Tối ưu hóa 60 FPS, 100% tiếng Việt, vẽ đầy đủ Khung xương 3D, Hộp bao, Thanh máu,
- * Khoảng cách, Tâm định vị cổ (Neck Crosshair) và Vòng quét FOV.
+ * Nâng cấp bổ sung:
+ * 1. Radar 2D Chiến Thuật Mini-Map (360 độ góc nhìn)
+ * 2. Cảnh báo Kẻ Địch Cận Chiến (< 25m) nhấp nháy chống bị móc lốp
+ * 3. Hỗ trợ Rung phản hồi (Haptic Pulse) khi khóa mục tiêu
+ * 4. Tương thích 100% Android No-Root & Xiaomi HyperOS 60/90/120/144 FPS
  */
 public class ESPView extends View {
 
     private volatile float[] players = new float[0];
 
-    // Cọ vẽ (Paints)
+    // Cọ vẽ chính
     private final Paint boxPaint         = new Paint();
     private final Paint cornerPaint      = new Paint();
     private final Paint textPaint        = new Paint();
@@ -33,19 +39,34 @@ public class ESPView extends View {
     private final Paint hudTextPaint     = new Paint();
     private final Paint centerCrossPaint = new Paint();
 
-    // Cấu hình tính năng (Mặc định bật đầy đủ)
-    private boolean drawBox           = true;
-    private boolean drawSkeleton      = true;
-    private boolean drawSnapline      = true;
-    private boolean drawHealthBar     = true;
-    private boolean drawNeckCrosshair = true;
-    private boolean drawFovCircle     = true;
-    private boolean autoNeckAim       = true; // Tự động khóa cổ khi mục tiêu vào vòng FOV
-    private boolean simulationMode    = true; // Chế độ mô phỏng xem trước khi chưa vào game
-    private boolean isGameConnected   = false;
-    private float   fovRadius         = 180.0f; // Bán kính vòng FOV
+    // Cọ vẽ Radar 2D & Cảnh Báo
+    private final Paint radarBgPaint     = new Paint();
+    private final Paint radarBorderPaint = new Paint();
+    private final Paint radarGridPaint   = new Paint();
+    private final Paint radarBlipPaint   = new Paint();
+    private final Paint radarSelfPaint   = new Paint();
+    private final Paint alertBgPaint     = new Paint();
+    private final Paint alertTextPaint   = new Paint();
 
-    // Bảng màu chuẩn hiển thị chiến trường
+    // Cấu hình tính năng
+    private boolean drawBox              = true;
+    private boolean drawSkeleton         = true;
+    private boolean drawSnapline         = true;
+    private boolean drawHealthBar        = true;
+    private boolean drawNeckCrosshair    = true;
+    private boolean drawFovCircle        = true;
+    private boolean autoNeckAim          = true;
+    private boolean drawRadar            = true;  // Radar 2D thu nhỏ góc trái
+    private boolean drawProximityAlert   = true;  // Cảnh báo kẻ địch áp sát
+    private boolean enableHapticFeedback = true;  // Rung phản hồi khi khóa
+    private boolean simulationMode       = true;
+    private boolean isGameConnected      = false;
+    private float   fovRadius            = 180.0f;
+
+    private Vibrator vibrator;
+    private long lastHapticTime = 0;
+
+    // Bảng màu chuẩn hiển thị
     private static final int COLOR_CYAN       = 0xFF00FFCC;
     private static final int COLOR_HP_GREEN   = 0xFF00E676;
     private static final int COLOR_HP_YELLOW  = 0xFFFFD600;
@@ -62,7 +83,10 @@ public class ESPView extends View {
         super(ctx);
         setLayerType(LAYER_TYPE_HARDWARE, null);
 
-        // Khung hộp 2D
+        try {
+            vibrator = (Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
+        } catch (Exception ignored) {}
+
         boxPaint.setStyle(Paint.Style.STROKE);
         boxPaint.setStrokeWidth(2.5f);
         boxPaint.setColor(0xCCFF2244);
@@ -73,7 +97,6 @@ public class ESPView extends View {
         cornerPaint.setColor(0xFFFF2244);
         cornerPaint.setAntiAlias(true);
 
-        // Chữ thông tin (Tên, Mét, Máu)
         textPaint.setColor(Color.WHITE);
         textPaint.setTextSize(20.0f);
         textPaint.setTypeface(Typeface.MONOSPACE);
@@ -81,7 +104,6 @@ public class ESPView extends View {
         textPaint.setShadowLayer(3.0f, 1.0f, 1.0f, Color.BLACK);
         textPaint.setAntiAlias(true);
 
-        // Vòng FOV quét mục tiêu
         fovPaint.setStyle(Paint.Style.STROKE);
         fovPaint.setColor(0x6600E5FF);
         fovPaint.setStrokeWidth(2.5f);
@@ -91,13 +113,11 @@ public class ESPView extends View {
         centerCrossPaint.setStrokeWidth(1.5f);
         centerCrossPaint.setAntiAlias(true);
 
-        // Đường dẫn hướng Snapline từ đáy màn hình
         snaplinePaint.setStyle(Paint.Style.STROKE);
         snaplinePaint.setColor(COLOR_SNAPLINE);
         snaplinePaint.setStrokeWidth(1.8f);
         snaplinePaint.setAntiAlias(true);
 
-        // Tia đỏ ngắm bắn & Vòng khóa Aimbot
         aimRayPaint.setStyle(Paint.Style.STROKE);
         aimRayPaint.setColor(COLOR_AIM_RAY);
         aimRayPaint.setStrokeWidth(2.5f);
@@ -108,7 +128,6 @@ public class ESPView extends View {
         aimLockPaint.setStrokeWidth(3.0f);
         aimLockPaint.setAntiAlias(true);
 
-        // Khung xương & Khớp nối 3D
         skeletonPaint.setStyle(Paint.Style.STROKE);
         skeletonPaint.setColor(COLOR_SKELETON);
         skeletonPaint.setStrokeWidth(2.2f);
@@ -118,13 +137,11 @@ public class ESPView extends View {
         jointPaint.setColor(COLOR_JOINT);
         jointPaint.setAntiAlias(true);
 
-        // Tâm định vị đốt cổ (Hỗ trợ kéo tâm vuốt tay)
         neckCrossPaint.setStyle(Paint.Style.STROKE);
         neckCrossPaint.setColor(0xFFFF1744);
         neckCrossPaint.setStrokeWidth(2.0f);
         neckCrossPaint.setAntiAlias(true);
 
-        // Thanh máu HP Bar
         hpBgPaint.setStyle(Paint.Style.FILL);
         hpBgPaint.setColor(0x99000000);
 
@@ -132,7 +149,6 @@ public class ESPView extends View {
         hpBarPaint.setColor(COLOR_HP_GREEN);
         hpBarPaint.setAntiAlias(true);
 
-        // Bảng trạng thái HUD
         hudBgPaint.setColor(0xCC0A0E1A);
         hudBgPaint.setStyle(Paint.Style.FILL);
 
@@ -141,6 +157,37 @@ public class ESPView extends View {
         hudTextPaint.setTypeface(Typeface.MONOSPACE);
         hudTextPaint.setFakeBoldText(true);
         hudTextPaint.setAntiAlias(true);
+
+        // Khởi tạo màu Radar
+        radarBgPaint.setColor(0xDD0D1122);
+        radarBgPaint.setStyle(Paint.Style.FILL);
+
+        radarBorderPaint.setColor(COLOR_CYAN);
+        radarBorderPaint.setStyle(Paint.Style.STROKE);
+        radarBorderPaint.setStrokeWidth(2.0f);
+        radarBorderPaint.setAntiAlias(true);
+
+        radarGridPaint.setColor(0x4400FFCC);
+        radarGridPaint.setStyle(Paint.Style.STROKE);
+        radarGridPaint.setStrokeWidth(1.2f);
+        radarGridPaint.setAntiAlias(true);
+
+        radarBlipPaint.setColor(COLOR_HP_RED);
+        radarBlipPaint.setStyle(Paint.Style.FILL);
+        radarBlipPaint.setAntiAlias(true);
+
+        radarSelfPaint.setColor(COLOR_HP_GREEN);
+        radarSelfPaint.setStyle(Paint.Style.FILL);
+        radarSelfPaint.setAntiAlias(true);
+
+        alertBgPaint.setColor(0xCCB71C1C);
+        alertBgPaint.setStyle(Paint.Style.FILL);
+
+        alertTextPaint.setColor(Color.WHITE);
+        alertTextPaint.setTextSize(17.0f);
+        alertTextPaint.setTypeface(Typeface.MONOSPACE);
+        alertTextPaint.setFakeBoldText(true);
+        alertTextPaint.setAntiAlias(true);
     }
 
     public void updatePlayers(float[] data) {
@@ -151,10 +198,6 @@ public class ESPView extends View {
             this.players = data;
             this.isGameConnected = true;
         }
-        postInvalidate();
-    }
-
-    public void setAimbotTarget(float x, float y) {
         postInvalidate();
     }
 
@@ -182,8 +225,31 @@ public class ESPView extends View {
     public void setAutoNeckAim(boolean on)      { this.autoNeckAim = on; postInvalidate(); }
     public boolean isAutoNeckAim()              { return autoNeckAim; }
 
+    public void setDrawRadar(boolean on)        { this.drawRadar = on; postInvalidate(); }
+    public boolean isDrawRadar()                { return drawRadar; }
+
+    public void setDrawProximityAlert(boolean on){ this.drawProximityAlert = on; postInvalidate(); }
+    public boolean isDrawProximityAlert()       { return drawProximityAlert; }
+
+    public void setEnableHapticFeedback(boolean on){ this.enableHapticFeedback = on; }
+    public boolean isEnableHapticFeedback()     { return enableHapticFeedback; }
+
     public void setFovRadius(float radius)      { this.fovRadius = radius; postInvalidate(); }
     public float getFovRadius()                 { return fovRadius; }
+
+    private void triggerHapticPulse() {
+        if (!enableHapticFeedback || vibrator == null) return;
+        long now = System.currentTimeMillis();
+        if (now - lastHapticTime < 500) return;
+        lastHapticTime = now;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(20);
+            }
+        } catch (Exception ignored) {}
+    }
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -196,18 +262,17 @@ public class ESPView extends View {
         final float screenCX = screenW * 0.5f;
         final float screenCY = screenH * 0.5f;
 
-        // ── 1. HUD BẢNG THÔNG TIN TRẠNG THÁI GÓC TRÊN ──
-        canvas.drawRect(20.0f, 15.0f, 520.0f, 58.0f, hudBgPaint);
+        // ── 1. HUD BẢNG TRẠNG THÁI GÓC TRÊN ──
+        canvas.drawRect(20.0f, 15.0f, 540.0f, 58.0f, hudBgPaint);
         String statusText = isGameConnected
                 ? "⚡ TRỰC TIẾP: LIÊN KẾT BỘ NHỚ | KÉO TÂM CỔ"
-                : "⚡ CHẾ ĐỘ MÔ PHỎNG | BÁN KÍNH FOV: " + (int)fovRadius + " PX";
+                : "⚡ MÔ PHỎNG XEM TRƯỚC | FOV: " + (int)fovRadius + "PX";
         hudTextPaint.setColor(isGameConnected ? COLOR_HP_GREEN : COLOR_CYAN);
         canvas.drawText(statusText, 30.0f, 43.0f, hudTextPaint);
 
         // ── 2. VÒNG QUÉT FOV TẠI TÂM MÀN HÌNH ──
         if (drawFovCircle) {
             canvas.drawCircle(screenCX, screenCY, fovRadius, fovPaint);
-            // Dấu cộng định tâm
             canvas.drawLine(screenCX - 12, screenCY, screenCX + 12, screenCY, centerCrossPaint);
             canvas.drawLine(screenCX, screenCY - 12, screenCX, screenCY + 12, centerCrossPaint);
         }
@@ -219,9 +284,19 @@ public class ESPView extends View {
         float bestTargetY = -1.0f;
         float bestDistFromCenter = Float.MAX_VALUE;
 
+        int nearbyEnemyCount = 0;
+        float minEnemyDistance = Float.MAX_VALUE;
+
+        // Mảng lưu tọa độ radar (dx, dy tương đối)
+        float[] radarOffsets = null;
+        int radarCount = 0;
+
         // ── 3. HIỂN THỊ CHI TIẾT NGƯỜI CHƠI TRÊN CHIẾN TRƯỜNG ──
         if (hasLivePlayers) {
             final int count = currentPlayers.length / STRIDE;
+            radarOffsets = new float[count * 2];
+            radarCount = count;
+
             for (int i = 0; i < count; ++i) {
                 final int off = i * STRIDE;
                 final float x = currentPlayers[off];
@@ -234,36 +309,38 @@ public class ESPView extends View {
                 final float top = y - h;
                 final float bottom = y;
 
-                // Đường Snapline dẫn hướng từ đáy màn hình
+                if (dist > 0 && dist < minEnemyDistance) minEnemyDistance = dist;
+                if (dist > 0 && dist <= 28.0f) nearbyEnemyCount++;
+
+                // Tính tọa độ điểm trên radar
+                float relX = (x - screenCX) / screenCX;
+                float relDist = Math.min(1.0f, dist / 120.0f);
+                radarOffsets[i * 2]     = relX * 50.0f;
+                radarOffsets[i * 2 + 1] = -relDist * 50.0f;
+
                 if (drawSnapline) {
                     canvas.drawLine(screenCX, screenH, x, bottom, snaplinePaint);
                 }
 
-                // Khung Hộp
                 if (drawBox) {
                     drawCornerBox(canvas, x, top, bottom, w);
                 }
 
-                // Khung Xương Đầy Đủ
                 if (drawSkeleton) {
                     drawFullSkeleton(canvas, x, top, bottom, w, h);
                 }
 
-                // Tọa độ đốt sống cổ: 18% từ đỉnh đầu xuống
                 final float neckX = x;
                 final float neckY = top + (h * 0.18f);
 
-                // Tâm Định Vị Cổ (Hỗ trợ kéo tâm vuốt tay)
                 if (drawNeckCrosshair) {
                     drawNeckCrosshairPoint(canvas, neckX, neckY);
                 }
 
-                // Thanh Máu & Thông Tin Khoảng Cách
                 if (drawHealthBar) {
                     drawHpAndTag(canvas, x, top, bottom, w, hp, dist, "ĐỊCH");
                 }
 
-                // Kiểm tra mục tiêu nằm trong vòng FOV để tự động khóa
                 float dX = neckX - screenCX;
                 float dY = neckY - screenCY;
                 float distCenter = (float) Math.hypot(dX, dY);
@@ -275,20 +352,28 @@ public class ESPView extends View {
                 }
             }
         } else if (simulationMode) {
-            // Chế độ mô phỏng trực quan giúp kiểm tra và cân chỉnh vòng ngắm
             float animOffset = (float) Math.sin(System.currentTimeMillis() * 0.003) * 8.0f;
 
-            // Mục tiêu 1 (Cự ly gần: ~28m)
-            float b1X = screenCX - 160.0f;
+            radarOffsets = new float[4];
+            radarCount = 2;
+
+            // Mục tiêu 1 (Cự ly gần: ~22m)
+            float b1X = screenCX - 150.0f;
             float b1Y = screenCY + 110.0f + animOffset;
             float b1W = 85.0f;
             float b1H = 180.0f;
             float b1Top = b1Y - b1H;
 
+            nearbyEnemyCount++;
+            minEnemyDistance = 22.0f;
+
+            radarOffsets[0] = -25.0f;
+            radarOffsets[1] = -18.0f;
+
             if (drawSnapline) canvas.drawLine(screenCX, screenH, b1X, b1Y, snaplinePaint);
             if (drawBox) drawCornerBox(canvas, b1X, b1Top, b1Y, b1W);
             if (drawSkeleton) drawFullSkeleton(canvas, b1X, b1Top, b1Y, b1W, b1H);
-            if (drawHealthBar) drawHpAndTag(canvas, b1X, b1Top, b1Y, b1W, 85.0f, 28.0f, "MỤC TIÊU 1");
+            if (drawHealthBar) drawHpAndTag(canvas, b1X, b1Top, b1Y, b1W, 85.0f, 22.0f, "MỤC TIÊU 1");
 
             float b1NeckX = b1X;
             float b1NeckY = b1Top + (b1H * 0.18f);
@@ -304,17 +389,20 @@ public class ESPView extends View {
                 bestDistFromCenter = dist1;
             }
 
-            // Mục tiêu 2 (Cự ly xa hơn bên phải: ~65m)
-            float b2X = screenCX + 290.0f;
+            // Mục tiêu 2 (Cự ly xa hơn: ~58m)
+            float b2X = screenCX + 280.0f;
             float b2Y = screenCY + 65.0f - animOffset;
             float b2W = 65.0f;
             float b2H = 140.0f;
             float b2Top = b2Y - b2H;
 
+            radarOffsets[2] = 38.0f;
+            radarOffsets[3] = -42.0f;
+
             if (drawSnapline) canvas.drawLine(screenCX, screenH, b2X, b2Y, snaplinePaint);
             if (drawBox) drawCornerBox(canvas, b2X, b2Top, b2Y, b2W);
             if (drawSkeleton) drawFullSkeleton(canvas, b2X, b2Top, b2Y, b2W, b2H);
-            if (drawHealthBar) drawHpAndTag(canvas, b2X, b2Top, b2Y, b2W, 40.0f, 65.0f, "MỤC TIÊU 2");
+            if (drawHealthBar) drawHpAndTag(canvas, b2X, b2Top, b2Y, b2W, 40.0f, 58.0f, "MỤC TIÊU 2");
 
             float b2NeckX = b2X;
             float b2NeckY = b2Top + (b2H * 0.18f);
@@ -330,14 +418,24 @@ public class ESPView extends View {
             }
         }
 
-        // ── 4. TỰ ĐỘNG KHÓA VÀ VUỐT TÂM VÀO ĐỐT CỔ (DRAG HEADSHOT) ──
+        // ── 4. RADAR 2D CHIẾN THUẬT MINI-MAP ──
+        if (drawRadar) {
+            drawTacticalRadar(canvas, radarOffsets, radarCount);
+        }
+
+        // ── 5. CẢNH BÁO KẺ ĐỊCH CẬN CHIẾN (< 28M) ──
+        if (drawProximityAlert && nearbyEnemyCount > 0 && minEnemyDistance < Float.MAX_VALUE) {
+            drawNearbyAlertBanner(canvas, screenCX, nearbyEnemyCount, minEnemyDistance);
+        }
+
+        // ── 6. TỰ ĐỘNG KHÓA VÀ VUỐT TÂM VÀO ĐỐT CỔ (DRAG HEADSHOT) ──
         if (autoNeckAim && bestTargetX > 0 && bestTargetY > 0) {
-            // Tia đỏ chỉ thị khóa mục tiêu
             canvas.drawLine(screenCX, screenCY, bestTargetX, bestTargetY, aimRayPaint);
             canvas.drawCircle(bestTargetX, bestTargetY, 15.0f, aimLockPaint);
-            canvas.drawText("🎯 KHÓA CỔ (KÉO TÂM)", bestTargetX - 85.0f, bestTargetY - 22.0f, textPaint);
+            canvas.drawText("🎯 KHÓA CỔ (KÉO TÂM CHỮ J)", bestTargetX - 105.0f, bestTargetY - 22.0f, textPaint);
 
-            // Kích hoạt vuốt điều hướng mượt qua RootUtils
+            triggerHapticPulse();
+
             if (RootUtils.isAutoAimDragEnabled()) {
                 RootUtils.triggerAimDrag(screenCX, screenCY, bestTargetX, bestTargetY);
             }
@@ -345,34 +443,79 @@ public class ESPView extends View {
     }
 
     /**
-     * Vẽ Khung Hộp Góc (Corner Box) thẩm mỹ cao, không che khuất tầm nhìn
+     * Vẽ Radar 2D Chiến Thuật Mini-Map ở góc trên bên trái
      */
+    private void drawTacticalRadar(Canvas canvas, float[] radarOffsets, int count) {
+        final float radarCX = 75.0f;
+        final float radarCY = 145.0f;
+        final float radarR  = 55.0f;
+
+        // Nền đen tròn radar
+        canvas.drawCircle(radarCX, radarCY, radarR, radarBgPaint);
+        // Vành viền Cyan
+        canvas.drawCircle(radarCX, radarCY, radarR, radarBorderPaint);
+        // Vòng cự ly 50m bên trong
+        canvas.drawCircle(radarCX, radarCY, radarR * 0.5f, radarGridPaint);
+        // Trục chữ thập định hướng
+        canvas.drawLine(radarCX - radarR, radarCY, radarCX + radarR, radarCY, radarGridPaint);
+        canvas.drawLine(radarCX, radarCY - radarR, radarCX, radarCY + radarR, radarGridPaint);
+
+        // Chấm tâm (Vị trí bản thân - Xanh lá)
+        canvas.drawCircle(radarCX, radarCY, 3.5f, radarSelfPaint);
+
+        // Vẽ các chấm mục tiêu kẻ địch (Đỏ)
+        if (radarOffsets != null && count > 0) {
+            for (int i = 0; i < count; i++) {
+                float rx = radarCX + radarOffsets[i * 2];
+                float ry = radarCY + radarOffsets[i * 2 + 1];
+
+                // Giới hạn trong bán kính radar
+                float dx = rx - radarCX;
+                float dy = ry - radarCY;
+                float dist = (float) Math.hypot(dx, dy);
+                if (dist > radarR - 4.0f) {
+                    rx = radarCX + (dx / dist) * (radarR - 4.0f);
+                    ry = radarCY + (dy / dist) * (radarR - 4.0f);
+                }
+                canvas.drawCircle(rx, ry, 3.5f, radarBlipPaint);
+            }
+        }
+    }
+
+    /**
+     * Vẽ Cảnh Báo Kẻ Địch Cận Chiến Nhấp Nháy (< 28m)
+     */
+    private void drawNearbyAlertBanner(Canvas canvas, float screenCX, int count, float minDist) {
+        float bannerW = 340.0f;
+        float bannerH = 34.0f;
+        float left = screenCX - (bannerW * 0.5f);
+        float top = 18.0f;
+
+        canvas.drawRect(left, top, left + bannerW, top + bannerH, alertBgPaint);
+
+        String alertMsg = "⚠️ CẢNH BÁO: " + count + " ĐỊCH GẦN [" + (int)minDist + "M]";
+        float textW = alertTextPaint.measureText(alertMsg);
+        canvas.drawText(alertMsg, screenCX - (textW * 0.5f), top + 23.0f, alertTextPaint);
+    }
+
     private void drawCornerBox(Canvas canvas, float x, float top, float bottom, float w) {
         float halfW = w * 0.5f;
         float left = x - halfW;
         float right = x + halfW;
         float lineLen = Math.min(w * 0.25f, 25.0f);
 
-        // Hộp mờ bên trong
         canvas.drawRect(left, top, right, bottom, boxPaint);
 
-        // Góc trên-trái
         canvas.drawLine(left, top, left + lineLen, top, cornerPaint);
         canvas.drawLine(left, top, left, top + lineLen, cornerPaint);
-        // Góc trên-phải
         canvas.drawLine(right, top, right - lineLen, top, cornerPaint);
         canvas.drawLine(right, top, right, top + lineLen, cornerPaint);
-        // Góc dưới-trái
         canvas.drawLine(left, bottom, left + lineLen, bottom, cornerPaint);
         canvas.drawLine(left, bottom, left, bottom - lineLen, cornerPaint);
-        // Góc dưới-phải
         canvas.drawLine(right, bottom, right - lineLen, bottom, cornerPaint);
         canvas.drawLine(right, bottom, right, bottom - lineLen, cornerPaint);
     }
 
-    /**
-     * Vẽ Khung Xương Đầy Đủ (Full Humanoid Skeleton) kèm các khớp tròn
-     */
     private void drawFullSkeleton(Canvas canvas, float x, float top, float bottom, float w, float h) {
         float headR    = h * 0.08f;
         float headY    = top + headR;
@@ -380,60 +523,46 @@ public class ESPView extends View {
         float spineY   = top + h * 0.45f;
         float pelvisY  = top + h * 0.55f;
 
-        // 1. Đầu
         canvas.drawCircle(x, headY, headR, skeletonPaint);
-
-        // 2. Cột sống & Khung thân
         canvas.drawLine(x, headY + headR, x, spineY, skeletonPaint);
         canvas.drawLine(x, spineY, x, pelvisY, skeletonPaint);
 
-        // 3. Xương quai xanh & Vai
         float shoulderW = w * 0.35f;
         float elbowY    = top + h * 0.35f;
         float handY     = top + h * 0.52f;
 
-        // Khớp vai
         canvas.drawCircle(x - shoulderW, neckY + h * 0.03f, 3.5f, jointPaint);
         canvas.drawCircle(x + shoulderW, neckY + h * 0.03f, 3.5f, jointPaint);
 
-        // Tay trái
         canvas.drawLine(x, neckY, x - shoulderW, neckY + h * 0.03f, skeletonPaint);
         canvas.drawLine(x - shoulderW, neckY + h * 0.03f, x - shoulderW - w * 0.1f, elbowY, skeletonPaint);
-        canvas.drawCircle(x - shoulderW - w * 0.1f, elbowY, 3.0f, jointPaint); // Khuỷu trái
+        canvas.drawCircle(x - shoulderW - w * 0.1f, elbowY, 3.0f, jointPaint);
         canvas.drawLine(x - shoulderW - w * 0.1f, elbowY, x - shoulderW - w * 0.14f, handY, skeletonPaint);
-        canvas.drawCircle(x - shoulderW - w * 0.14f, handY, 2.5f, jointPaint); // Bàn tay trái
+        canvas.drawCircle(x - shoulderW - w * 0.14f, handY, 2.5f, jointPaint);
 
-        // Tay phải
         canvas.drawLine(x, neckY, x + shoulderW, neckY + h * 0.03f, skeletonPaint);
         canvas.drawLine(x + shoulderW, neckY + h * 0.03f, x + shoulderW + w * 0.1f, elbowY, skeletonPaint);
-        canvas.drawCircle(x + shoulderW + w * 0.1f, elbowY, 3.0f, jointPaint); // Khuỷu phải
+        canvas.drawCircle(x + shoulderW + w * 0.1f, elbowY, 3.0f, jointPaint);
         canvas.drawLine(x + shoulderW + w * 0.1f, elbowY, x + shoulderW + w * 0.14f, handY, skeletonPaint);
-        canvas.drawCircle(x + shoulderW + w * 0.14f, handY, 2.5f, jointPaint); // Bàn tay phải
+        canvas.drawCircle(x + shoulderW + w * 0.14f, handY, 2.5f, jointPaint);
 
-        // 4. Khung chậu & Chân
         float kneeY = top + h * 0.77f;
         float legW  = w * 0.28f;
 
-        // Khớp hông
         canvas.drawCircle(x - legW * 0.4f, pelvisY, 3.5f, jointPaint);
         canvas.drawCircle(x + legW * 0.4f, pelvisY, 3.5f, jointPaint);
 
-        // Chân trái
         canvas.drawLine(x, pelvisY, x - legW * 0.6f, kneeY, skeletonPaint);
-        canvas.drawCircle(x - legW * 0.6f, kneeY, 3.5f, jointPaint); // Khớp gối trái
+        canvas.drawCircle(x - legW * 0.6f, kneeY, 3.5f, jointPaint);
         canvas.drawLine(x - legW * 0.6f, kneeY, x - legW, bottom, skeletonPaint);
-        canvas.drawCircle(x - legW, bottom, 3.0f, jointPaint); // Bàn chân trái
+        canvas.drawCircle(x - legW, bottom, 3.0f, jointPaint);
 
-        // Chân phải
         canvas.drawLine(x, pelvisY, x + legW * 0.6f, kneeY, skeletonPaint);
-        canvas.drawCircle(x + legW * 0.6f, kneeY, 3.5f, jointPaint); // Khớp gối phải
+        canvas.drawCircle(x + legW * 0.6f, kneeY, 3.5f, jointPaint);
         canvas.drawLine(x + legW * 0.6f, kneeY, x + legW, bottom, skeletonPaint);
-        canvas.drawCircle(x + legW, bottom, 3.0f, jointPaint); // Bàn chân phải
+        canvas.drawCircle(x + legW, bottom, 3.0f, jointPaint);
     }
 
-    /**
-     * Vẽ Tâm Định Vị Cổ: Điểm đặt tâm lý tưởng hỗ trợ thao tác kéo tâm vuốt tay
-     */
     private void drawNeckCrosshairPoint(Canvas canvas, float nx, float ny) {
         canvas.drawCircle(nx, ny, 7.0f, neckCrossPaint);
         canvas.drawLine(nx - 14.0f, ny, nx - 6.0f, ny, neckCrossPaint);
@@ -442,16 +571,12 @@ public class ESPView extends View {
         canvas.drawLine(nx, ny + 6.0f, nx, ny + 14.0f, neckCrossPaint);
     }
 
-    /**
-     * Vẽ Thanh Máu Động và Nhãn Khoảng Cách Mét
-     */
     private void drawHpAndTag(Canvas canvas, float x, float top, float bottom, float w, float hp, float dist, String label) {
         float halfW = w * 0.5f;
         float barLeft = x - halfW - 10.0f;
         float barWidth = 5.0f;
         float totalH = bottom - top;
 
-        // Cột máu cạnh trái
         canvas.drawRect(barLeft, top, barLeft + barWidth, bottom, hpBgPaint);
 
         float clampedHp = Math.max(0.0f, Math.min(100.0f, hp));
@@ -467,7 +592,6 @@ public class ESPView extends View {
         }
         canvas.drawRect(barLeft, hpTop, barLeft + barWidth, bottom, hpBarPaint);
 
-        // Nhãn thông tin trên đỉnh đầu
         String tag = label + " [" + (int)dist + "M] " + (int)clampedHp + "%";
         float textW = textPaint.measureText(tag);
         canvas.drawText(tag, x - (textW * 0.5f), top - 10.0f, textPaint);

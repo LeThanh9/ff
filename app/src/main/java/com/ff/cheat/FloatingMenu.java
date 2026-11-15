@@ -239,6 +239,12 @@ public class FloatingMenu {
         addSwitch(content, "Vẽ Đường Dẫn Hướng (Snapline từ đáy)", espView != null && espView.isDrawSnapline(), isChecked -> {
             if (espView != null) espView.setDrawSnapline(isChecked);
         });
+        addSwitch(content, "Vẽ Radar 2D Chiến Thuật (Mini-Map)", espView != null && espView.isDrawRadar(), isChecked -> {
+            if (espView != null) espView.setDrawRadar(isChecked);
+        });
+        addSwitch(content, "Cảnh Báo Kẻ Địch Cận Chiến (< 28m)", espView != null && espView.isDrawProximityAlert(), isChecked -> {
+            if (espView != null) espView.setDrawProximityAlert(isChecked);
+        });
 
         // ══════════════════════════════════════════════════════════════
         // PHẦN 2: TỰ ĐỘNG KHÓA CỔ & KÉO TÂM (AIMBOT)
@@ -284,6 +290,14 @@ public class FloatingMenu {
             if (isChecked && !RootUtils.isAimDragSupported()) {
                 Toast.makeText(context, "Lưu ý máy No-Root / Xiaomi: Hãy bật 'Dịch Vụ Trợ Năng' để tự động vuốt tâm!", Toast.LENGTH_LONG).show();
             }
+        });
+
+        addSwitch(content, "⚡ Kéo Tâm Chữ J (Vuốt Cong Tự Nhiên)", RootUtils.isUseJCurveDrag(), isChecked -> {
+            RootUtils.setUseJCurveDrag(isChecked);
+        });
+
+        addSwitch(content, "📳 Rung Phản Hồi Khi Khóa Mục Tiêu", espView != null && espView.isEnableHapticFeedback(), isChecked -> {
+            if (espView != null) espView.setEnableHapticFeedback(isChecked);
         });
 
         // Nút mở nhanh Trợ Năng cho máy No-Root / Xiaomi HyperOS

@@ -73,6 +73,31 @@ public class AimAccessibilityService extends AccessibilityService {
     }
 
     /**
+     * Thực hiện thao tác vuốt cong Bezier (Kỹ thuật Kéo Tâm chữ J chuyên nghiệp cho Free Fire)
+     * Thao tác: Nhả nhẹ tâm ngực rồi giật mạnh hình vòng cung chữ J lên đầu đối thủ
+     */
+    public static boolean performCurvedSwipe(float startX, float startY, float controlX, float controlY, float endX, float endY, long durationMs) {
+        if (instance == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            return false;
+        }
+
+        try {
+            Path path = new Path();
+            path.moveTo(startX, startY);
+            path.quadTo(controlX, controlY, endX, endY);
+
+            GestureDescription.Builder builder = new GestureDescription.Builder();
+            long safeDuration = Math.max(15, Math.min(100, durationMs));
+            builder.addStroke(new GestureDescription.StrokeDescription(path, 0, safeDuration));
+
+            return instance.dispatchGesture(builder.build(), null, null);
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi thực thi performCurvedSwipe: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Kiểm tra xem người dùng đã bật dịch vụ trợ năng này trong Cài Đặt chưa
      */
     public static boolean isAccessibilityEnabled(Context context) {
