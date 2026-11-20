@@ -1,0 +1,25 @@
+{
+  "version": "1.132.1",
+  "architecture": "arm64-v8a",
+  "binary": "libil2cpp.so",
+  "metadata_version": 31,
+  "rva_targets": {
+    "PLAYER_MaxHpShowValue": "0x06F14694",
+    "PLAYER_APICCTMove": "0x06F22D5C",
+    "PLAYER_DeltaSpeedScale": "0x06F03238",
+    "PLAYER_WeaponDamageScale": "0x06F07D44",
+    "CAMERA_SetOffestFOV": "0x0719337C",
+    "CAMERA_GetFovNormal": "0x07193E48",
+    "CAMERA_StartGunFeelSpringRecoil": "0x07183C28",
+    "CROSSHAIR_IsRecoilCrosshairType": "0x04D6874C",
+    "CROSSHAIR_UpdateRecoilCrosshair": "0x04D7306C",
+    "AIM_CanAssitByWeapon": "0x07EF4E40",
+    "AIM_get_CanBeLockedByAimAssist": "0x07EF5864",
+    "AIM_IsSameTeamWithPlayerID": "0x07EF4EAC"
+  },
+  "evasion": {
+    "anti_cheat": "Tencent GameSafe ACE (libanogs.so, libanort.so)",
+    "telemetry_class": "com.gamesafe.ano.AnoSdk",
+    "frida_scanner": "com.appsflyer.internal.AFf1kSDK"
+  }
+}
